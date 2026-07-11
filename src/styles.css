@@ -1207,6 +1207,8 @@ button:disabled {
   color: var(--ink);
   cursor: grab;
   padding: 11px 12px;
+  touch-action: none;
+  user-select: none;
 }
 
 .sort-row + .sort-row {
@@ -1223,7 +1225,9 @@ button:disabled {
   opacity: 0.62;
 }
 
-.sort-row:active {
+.sort-row:active,
+body.sorting-drag-active,
+body.sorting-drag-active * {
   cursor: grabbing;
 }
 

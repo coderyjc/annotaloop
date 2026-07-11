@@ -505,14 +505,16 @@ export default function App() {
 
   function moveSortDraft(targetChapterId: string, movedChapterId?: string | null) {
     if (!movedChapterId || movedChapterId === targetChapterId) return;
-    const from = sortDraft.findIndex((chapter) => chapter.id === movedChapterId);
-    const to = sortDraft.findIndex((chapter) => chapter.id === targetChapterId);
-    if (from < 0 || to < 0) return;
+    setSortDraft((current) => {
+      const from = current.findIndex((chapter) => chapter.id === movedChapterId);
+      const to = current.findIndex((chapter) => chapter.id === targetChapterId);
+      if (from < 0 || to < 0) return current;
 
-    const next = [...sortDraft];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    setSortDraft(next);
+      const next = [...current];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
   }
 
   async function saveSortDraft() {
@@ -749,7 +751,7 @@ export default function App() {
               onClick={() => void selectChapter(chapter.id)}
             >
               <FileText size={15} />
-              <span>{chapter.title}</span>
+              <span>{chapterFileName(chapter)}</span>
             </button>
           ))}
         </div>
@@ -797,14 +799,14 @@ export default function App() {
               </select>
             )}
             <button
-              className={`icon-button ${isLeftCollapsed ? "active" : ""}`}
+              className={`icon-button ${!isLeftCollapsed ? "active" : ""}`}
               title={isLeftCollapsed ? "展开左栏" : "收起左栏"}
               onClick={() => setIsLeftCollapsed((value) => !value)}
             >
               <BookOpen size={18} />
             </button>
             <button
-              className={`icon-button ${isRightCollapsed ? "active" : ""}`}
+              className={`icon-button ${!isRightCollapsed ? "active" : ""}`}
               title={isRightCollapsed ? "展开右栏" : "收起右栏"}
               onClick={() => setIsRightCollapsed((value) => !value)}
             >
@@ -970,6 +972,43 @@ function SortChaptersModal({
   onClose: () => void;
   onSave: () => void;
 }) {
+  const dragIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    dragIdRef.current = dragChapterId;
+  }, [dragChapterId]);
+
+  useEffect(() => {
+    if (!dragChapterId) return;
+
+    const handlePointerMove = (event: PointerEvent) => {
+      event.preventDefault();
+      const element = document.elementFromPoint(event.clientX, event.clientY);
+      const row = element?.closest<HTMLElement>("[data-sort-chapter-id]");
+      const targetChapterId = row?.dataset.sortChapterId;
+      if (targetChapterId) {
+        onMove(targetChapterId, dragIdRef.current);
+      }
+    };
+
+    const handlePointerEnd = () => {
+      dragIdRef.current = null;
+      onDragStart(null);
+    };
+
+    document.body.classList.add("sorting-drag-active");
+    window.addEventListener("pointermove", handlePointerMove, { passive: false });
+    window.addEventListener("pointerup", handlePointerEnd);
+    window.addEventListener("pointercancel", handlePointerEnd);
+
+    return () => {
+      document.body.classList.remove("sorting-drag-active");
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerEnd);
+      window.removeEventListener("pointercancel", handlePointerEnd);
+    };
+  }, [dragChapterId, onDragStart, onMove]);
+
   return (
     <div
       className="modal-backdrop"
@@ -993,29 +1032,20 @@ function SortChaptersModal({
           {chapters.map((chapter, index) => (
             <div
               key={chapter.id}
+              data-sort-chapter-id={chapter.id}
               className={`sort-row ${chapter.id === activeChapterId ? "active" : ""} ${
                 chapter.id === dragChapterId ? "dragging" : ""
               }`}
-              draggable
-              onDragStart={(event) => {
+              onPointerDown={(event) => {
+                if (event.button !== 0) return;
+                event.preventDefault();
+                dragIdRef.current = chapter.id;
                 onDragStart(chapter.id);
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData("text/plain", chapter.id);
               }}
-              onDragOver={(event) => {
-                event.preventDefault();
-                event.dataTransfer.dropEffect = "move";
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                const source = event.dataTransfer.getData("text/plain") || dragChapterId;
-                onMove(chapter.id, source);
-              }}
-              onDragEnd={() => onDragStart(null)}
             >
               <span className="sort-index">{String(index + 1).padStart(2, "0")}</span>
               <GripVertical size={16} />
-              <strong>{chapter.title}</strong>
+              <strong>{chapterFileName(chapter)}</strong>
             </div>
           ))}
         </div>
@@ -1382,8 +1412,10 @@ function TopNotice({
   );
 }
 
-function shortHash(hash: string) {
-  return hash.slice(0, 8);
+function chapterFileName(chapter: Chapter) {
+  const normalizedPath = chapter.filePath.replace(/\\/g, "/");
+  const fileName = normalizedPath.split("/").filter(Boolean).pop();
+  return fileName || chapter.title;
 }
 
 function readError(err: unknown) {

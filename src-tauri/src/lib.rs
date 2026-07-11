@@ -498,7 +498,10 @@ fn import_book_folder(path: String, state: State<AppState>) -> AppResult<BookWit
     for (index, file_path) in md_files.iter().enumerate() {
         let content = fs::read_to_string(file_path)
             .map_err(|error| format!("Failed to read {}: {error}", path_to_string(file_path)))?;
-        let title = extract_title(&content)
+        let title = file_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .map(str::to_string)
             .or_else(|| file_path.file_stem().and_then(|stem| stem.to_str()).map(str::to_string))
             .unwrap_or_else(|| format!("Chapter {}", index + 1));
         let chapter_id = new_id();
@@ -1376,19 +1379,6 @@ fn empty_marker(value: &str) -> &str {
     } else {
         value
     }
-}
-
-fn extract_title(content: &str) -> Option<String> {
-    for line in content.lines() {
-        let trimmed = line.trim_start();
-        if trimmed.starts_with('#') {
-            let hashes = trimmed.chars().take_while(|char| *char == '#').count();
-            if (1..=6).contains(&hashes) && trimmed.chars().nth(hashes) == Some(' ') {
-                return Some(trimmed[hashes..].trim().to_string());
-            }
-        }
-    }
-    None
 }
 
 fn extract_outline(content: &str) -> Vec<OutlineItem> {
