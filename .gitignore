@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Frontend build output
+dist/
+dist-ssr/
+.vite/
+
+# Tauri / Rust build output
+target/
+src-tauri/target/
+src-tauri/gen/
+*.rs.bk
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment and local overrides
+.env
+.env.*
+!.env.example
+*.local
+
+# Local app data / databases
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+
+# Test and coverage output
+coverage/
+.nyc_output/
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Codex / local agent workspace state
+.agents/
+.codex/
