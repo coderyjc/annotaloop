@@ -8,6 +8,34 @@ export interface SearchHighlight {
   matchedText: string;
 }
 
+export interface RenderedSelectionAnchor {
+  selectedText: string;
+  startOffset: number;
+  endOffset: number;
+  fullText: string;
+}
+
+interface DomHighlightRange {
+  id?: string;
+  startOffset: number;
+  endOffset: number;
+  className: string;
+  color?: string;
+  search?: boolean;
+}
+
+interface TextNodeSpan {
+  node: Text;
+  startOffset: number;
+  endOffset: number;
+}
+
+interface TextNodeSegment {
+  startOffset: number;
+  endOffset: number;
+  range: DomHighlightRange;
+}
+
 const md = new MarkdownIt({
   html: true,
   linkify: true,
@@ -30,12 +58,69 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
 
 export function renderMarkdownWithAnnotations(
   content: string,
-  annotations: Annotation[],
   chapterFilePath: string,
+) {
+  return md.render(content, { chapterFilePath });
+}
+
+export function getRenderedSelectionAnchor(root: HTMLElement, selection: Selection) {
+  if (selection.rangeCount === 0) return null;
+  const range = selection.getRangeAt(0);
+  if (!root.contains(range.commonAncestorContainer)) return null;
+
+  const fullText = root.textContent ?? "";
+  const rawStart = getBoundaryTextOffset(root, range.startContainer, range.startOffset);
+  const rawEnd = getBoundaryTextOffset(root, range.endContainer, range.endOffset);
+  const start = Math.min(rawStart, rawEnd);
+  const end = Math.max(rawStart, rawEnd);
+  const selectedFromTextContent = fullText.slice(start, end);
+  const leadingWhitespace = selectedFromTextContent.match(/^\s*/)?.[0].length ?? 0;
+  const trailingWhitespace = selectedFromTextContent.match(/\s*$/)?.[0].length ?? 0;
+  const trimmedStart = start + leadingWhitespace;
+  const trimmedEnd = Math.max(trimmedStart, end - trailingWhitespace);
+  const selectedText = selection.toString().trim() || fullText.slice(trimmedStart, trimmedEnd);
+
+  if (!selectedText || trimmedEnd <= trimmedStart) return null;
+  return {
+    selectedText,
+    startOffset: trimmedStart,
+    endOffset: trimmedEnd,
+    fullText,
+  } satisfies RenderedSelectionAnchor;
+}
+
+export function getContextFromText(content: string, start: number, end: number, chars: number) {
+  return {
+    before: content.slice(Math.max(0, start - chars), start),
+    after: content.slice(end, Math.min(content.length, end + chars)),
+  };
+}
+
+export function applyDomHighlights(
+  root: HTMLElement,
+  annotations: Annotation[],
   searchHighlight?: SearchHighlight | null,
 ) {
-  const marked = applyAnnotationMarks(content, annotations, searchHighlight);
-  return md.render(marked, { chapterFilePath });
+  clearDomHighlights(root);
+  const rootText = root.textContent ?? "";
+  const annotationRanges = annotations
+    .map((annotation) => resolveAnnotationRange(rootText, annotation))
+    .filter((range): range is DomHighlightRange => Boolean(range));
+  const normalizedAnnotationRanges = normalizeNonOverlappingRanges(annotationRanges, rootText.length);
+  const ranges = [...normalizedAnnotationRanges];
+  const searchRange = resolveSearchRange(rootText, searchHighlight);
+  if (
+    searchRange &&
+    !normalizedAnnotationRanges.some(
+      (range) =>
+        searchRange.startOffset < range.endOffset &&
+        searchRange.endOffset > range.startOffset,
+    )
+  ) {
+    ranges.push(searchRange);
+  }
+
+  wrapDomRanges(root, ranges);
 }
 
 export function findSelectionOffset(content: string, selectedText: string) {
@@ -99,66 +184,6 @@ export function getHeadingPath(content: string, offset: number) {
   return stack.map((heading) => heading.title).join(" > ");
 }
 
-function applyAnnotationMarks(
-  content: string,
-  annotations: Annotation[],
-  searchHighlight?: SearchHighlight | null,
-) {
-  const ranges = annotations
-    .filter((annotation) => {
-      const start = annotation.startOffset;
-      const end = annotation.endOffset;
-      return (
-        start >= 0 &&
-        end > start &&
-        end <= content.length &&
-        content.slice(start, end) === annotation.selectedText
-      );
-    })
-    .map((annotation) => ({
-      startOffset: annotation.startOffset,
-      endOffset: annotation.endOffset,
-      open: `<mark class="annotation-mark" style="--mark-color: ${escapeAttribute(annotation.highlightColor || "#f5d76e")};" data-annotation-id="${escapeAttribute(annotation.id)}">`,
-      close: "</mark>",
-    }));
-
-  if (
-    searchHighlight &&
-    searchHighlight.startOffset >= 0 &&
-    searchHighlight.endOffset > searchHighlight.startOffset &&
-    searchHighlight.endOffset <= content.length &&
-    content.slice(searchHighlight.startOffset, searchHighlight.endOffset) ===
-      searchHighlight.matchedText &&
-    !ranges.some(
-      (range) =>
-        searchHighlight.startOffset < range.endOffset &&
-        searchHighlight.endOffset > range.startOffset,
-    )
-  ) {
-    ranges.push({
-      startOffset: searchHighlight.startOffset,
-      endOffset: searchHighlight.endOffset,
-      open: '<mark class="search-hit-mark" data-search-hit="true">',
-      close: "</mark>",
-    });
-  }
-
-  ranges.sort((a, b) => {
-    if (a.startOffset !== b.startOffset) return b.startOffset - a.startOffset;
-    return a.endOffset - b.endOffset;
-  });
-
-  let output = content;
-  for (const range of ranges) {
-    output = `${output.slice(0, range.startOffset)}${range.open}${output.slice(
-      range.startOffset,
-      range.endOffset,
-    )}${range.close}${output.slice(range.endOffset)}`;
-  }
-
-  return output;
-}
-
 function resolveImageSrc(src: string, chapterFilePath?: string) {
   if (
     !chapterFilePath ||
@@ -180,19 +205,269 @@ function resolveImageSrc(src: string, chapterFilePath?: string) {
   }
 }
 
-function escapeAttribute(value: string) {
-  return value.replace(/[&<>"']/g, (char) => {
-    switch (char) {
-      case "&":
-        return "&amp;";
-      case "<":
-        return "&lt;";
-      case ">":
-        return "&gt;";
-      case '"':
-        return "&quot;";
-      default:
-        return "&#39;";
+function getBoundaryTextOffset(root: HTMLElement, container: Node, offset: number) {
+  const range = document.createRange();
+  range.selectNodeContents(root);
+  range.setEnd(container, offset);
+  const fragment = range.cloneContents();
+  return fragment.textContent?.length ?? 0;
+}
+
+function clearDomHighlights(root: HTMLElement) {
+  const marks = Array.from(
+    root.querySelectorAll<HTMLElement>("mark.annotation-mark, mark.search-hit-mark"),
+  );
+  for (const mark of marks) {
+    const parent = mark.parentNode;
+    if (!parent) continue;
+    while (mark.firstChild) {
+      parent.insertBefore(mark.firstChild, mark);
     }
-  });
+    parent.removeChild(mark);
+    parent.normalize();
+  }
+}
+
+function resolveAnnotationRange(rootText: string, annotation: Annotation): DomHighlightRange | null {
+  const renderedStart = annotation.renderedStartOffset;
+  const renderedEnd = annotation.renderedEndOffset;
+  if (
+    typeof renderedStart === "number" &&
+    typeof renderedEnd === "number" &&
+    renderedStart >= 0 &&
+    renderedEnd > renderedStart &&
+    renderedEnd <= rootText.length
+  ) {
+    return {
+      id: annotation.id,
+      startOffset: renderedStart,
+      endOffset: renderedEnd,
+      className: "annotation-mark",
+      color: annotation.highlightColor || "#f5d76e",
+    };
+  }
+
+  const anchoredStart = findAnchoredTextOffset(
+    rootText,
+    annotation.selectedText,
+    annotation.contextBefore,
+    annotation.contextAfter,
+  );
+  if (anchoredStart >= 0) {
+    return {
+      id: annotation.id,
+      startOffset: anchoredStart,
+      endOffset: anchoredStart + annotation.selectedText.length,
+      className: "annotation-mark",
+      color: annotation.highlightColor || "#f5d76e",
+    };
+  }
+
+  if (
+    annotation.startOffset >= 0 &&
+    annotation.endOffset > annotation.startOffset &&
+    annotation.endOffset <= rootText.length &&
+    rootText.slice(annotation.startOffset, annotation.endOffset) === annotation.selectedText
+  ) {
+    return {
+      id: annotation.id,
+      startOffset: annotation.startOffset,
+      endOffset: annotation.endOffset,
+      className: "annotation-mark",
+      color: annotation.highlightColor || "#f5d76e",
+    };
+  }
+
+  return null;
+}
+
+function resolveSearchRange(
+  rootText: string,
+  searchHighlight?: SearchHighlight | null,
+): DomHighlightRange | null {
+  if (!searchHighlight) return null;
+  if (
+    searchHighlight.startOffset >= 0 &&
+    searchHighlight.endOffset > searchHighlight.startOffset &&
+    searchHighlight.endOffset <= rootText.length &&
+    rootText.slice(searchHighlight.startOffset, searchHighlight.endOffset) ===
+      searchHighlight.matchedText
+  ) {
+    return {
+      startOffset: searchHighlight.startOffset,
+      endOffset: searchHighlight.endOffset,
+      className: "search-hit-mark",
+      search: true,
+    };
+  }
+
+  const start = rootText.indexOf(searchHighlight.matchedText);
+  if (start < 0) return null;
+  return {
+    startOffset: start,
+    endOffset: start + searchHighlight.matchedText.length,
+    className: "search-hit-mark",
+    search: true,
+  };
+}
+
+function findAnchoredTextOffset(
+  rootText: string,
+  selectedText: string,
+  contextBefore: string,
+  contextAfter: string,
+) {
+  if (!selectedText) return -1;
+  const candidates: number[] = [];
+  let cursor = 0;
+  while (cursor <= rootText.length) {
+    const index = rootText.indexOf(selectedText, cursor);
+    if (index < 0) break;
+    candidates.push(index);
+    cursor = index + Math.max(1, selectedText.length);
+  }
+  if (candidates.length === 0) return -1;
+  if (candidates.length === 1) return candidates[0];
+
+  const beforeHint = contextBefore.slice(-40);
+  const afterHint = contextAfter.slice(0, 40);
+  let best = candidates[0];
+  let bestScore = -1;
+  for (const candidate of candidates) {
+    const before = rootText.slice(Math.max(0, candidate - beforeHint.length), candidate);
+    const after = rootText.slice(
+      candidate + selectedText.length,
+      candidate + selectedText.length + afterHint.length,
+    );
+    const score = commonSuffixLength(before, beforeHint) + commonPrefixLength(after, afterHint);
+    if (score > bestScore) {
+      best = candidate;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+function commonPrefixLength(left: string, right: string) {
+  const length = Math.min(left.length, right.length);
+  let index = 0;
+  while (index < length && left[index] === right[index]) index += 1;
+  return index;
+}
+
+function commonSuffixLength(left: string, right: string) {
+  const length = Math.min(left.length, right.length);
+  let index = 0;
+  while (index < length && left[left.length - 1 - index] === right[right.length - 1 - index]) {
+    index += 1;
+  }
+  return index;
+}
+
+function normalizeNonOverlappingRanges(ranges: DomHighlightRange[], textLength: number) {
+  const normalized: DomHighlightRange[] = [];
+  let lastEnd = -1;
+  for (const range of [...ranges].sort((a, b) => a.startOffset - b.startOffset)) {
+    if (
+      range.startOffset < 0 ||
+      range.endOffset <= range.startOffset ||
+      range.endOffset > textLength ||
+      range.startOffset < lastEnd
+    ) {
+      continue;
+    }
+    normalized.push(range);
+    lastEnd = range.endOffset;
+  }
+  return normalized;
+}
+
+function wrapDomRanges(root: HTMLElement, ranges: DomHighlightRange[]) {
+  if (ranges.length === 0) return;
+  const textNodes = collectTextNodes(root);
+  const segmentsByNode = new Map<Text, TextNodeSegment[]>();
+
+  for (const textNode of textNodes) {
+    for (const range of ranges) {
+      if (textNode.endOffset <= range.startOffset || textNode.startOffset >= range.endOffset) {
+        continue;
+      }
+      const segment: TextNodeSegment = {
+        startOffset: Math.max(0, range.startOffset - textNode.startOffset),
+        endOffset: Math.min(textNode.node.data.length, range.endOffset - textNode.startOffset),
+        range,
+      };
+      if (segment.endOffset > segment.startOffset) {
+        const existing = segmentsByNode.get(textNode.node) ?? [];
+        existing.push(segment);
+        segmentsByNode.set(textNode.node, existing);
+      }
+    }
+  }
+
+  for (const [node, segments] of segmentsByNode) {
+    wrapTextNodeSegments(node, segments);
+  }
+}
+
+function collectTextNodes(root: HTMLElement) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes: TextNodeSpan[] = [];
+  let offset = 0;
+  while (walker.nextNode()) {
+    const node = walker.currentNode as Text;
+    const length = node.data.length;
+    nodes.push({
+      node,
+      startOffset: offset,
+      endOffset: offset + length,
+    });
+    offset += length;
+  }
+  return nodes;
+}
+
+function wrapTextNodeSegments(node: Text, segments: TextNodeSegment[]) {
+  const parent = node.parentNode;
+  if (!parent) return;
+  const normalizedSegments = normalizeSegments(segments, node.data.length);
+  if (normalizedSegments.length === 0) return;
+
+  const fragment = document.createDocumentFragment();
+  let cursor = 0;
+  for (const segment of normalizedSegments) {
+    if (segment.startOffset > cursor) {
+      fragment.append(document.createTextNode(node.data.slice(cursor, segment.startOffset)));
+    }
+    const mark = document.createElement("mark");
+    mark.className = segment.range.className;
+    if (segment.range.id) mark.dataset.annotationId = segment.range.id;
+    if (segment.range.search) mark.dataset.searchHit = "true";
+    if (segment.range.color) mark.style.setProperty("--mark-color", segment.range.color);
+    mark.textContent = node.data.slice(segment.startOffset, segment.endOffset);
+    fragment.append(mark);
+    cursor = segment.endOffset;
+  }
+  if (cursor < node.data.length) {
+    fragment.append(document.createTextNode(node.data.slice(cursor)));
+  }
+  parent.replaceChild(fragment, node);
+}
+
+function normalizeSegments(segments: TextNodeSegment[], textLength: number) {
+  const normalized: TextNodeSegment[] = [];
+  let lastEnd = -1;
+  for (const segment of [...segments].sort((a, b) => a.startOffset - b.startOffset)) {
+    if (
+      segment.startOffset < 0 ||
+      segment.endOffset <= segment.startOffset ||
+      segment.endOffset > textLength ||
+      segment.startOffset < lastEnd
+    ) {
+      continue;
+    }
+    normalized.push(segment);
+    lastEnd = segment.endOffset;
+  }
+  return normalized;
 }

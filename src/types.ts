@@ -43,6 +43,8 @@ export interface Annotation {
   selectedText: string;
   startOffset: number;
   endOffset: number;
+  renderedStartOffset: number | null;
+  renderedEndOffset: number | null;
   contextBefore: string;
   contextAfter: string;
   headingPath: string;
@@ -119,6 +121,8 @@ export interface AnnotationPayload {
   selectedText: string;
   startOffset: number;
   endOffset: number;
+  renderedStartOffset?: number | null;
+  renderedEndOffset?: number | null;
   contextBefore: string;
   contextAfter: string;
   headingPath: string;

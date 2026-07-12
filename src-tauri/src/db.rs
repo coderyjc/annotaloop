@@ -48,6 +48,8 @@ pub fn init_database(db_path: &Path) -> Result<Connection, rusqlite::Error> {
             selected_text TEXT NOT NULL,
             start_offset INTEGER NOT NULL,
             end_offset INTEGER NOT NULL,
+            rendered_start_offset INTEGER,
+            rendered_end_offset INTEGER,
             context_before TEXT NOT NULL,
             context_after TEXT NOT NULL,
             heading_path TEXT NOT NULL,
@@ -124,6 +126,18 @@ pub fn init_database(db_path: &Path) -> Result<Connection, rusqlite::Error> {
         "annotations",
         "status",
         "ALTER TABLE annotations ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'",
+    )?;
+    ensure_column(
+        &conn,
+        "annotations",
+        "rendered_start_offset",
+        "ALTER TABLE annotations ADD COLUMN rendered_start_offset INTEGER",
+    )?;
+    ensure_column(
+        &conn,
+        "annotations",
+        "rendered_end_offset",
+        "ALTER TABLE annotations ADD COLUMN rendered_end_offset INTEGER",
     )?;
     ensure_column(
         &conn,

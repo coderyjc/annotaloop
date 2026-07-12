@@ -6,7 +6,6 @@ import {
   FolderPlus,
   Grid3X3,
   Highlighter,
-  LayoutList,
   MessageSquare,
   Settings,
 } from "lucide-react";
@@ -62,9 +61,11 @@ import {
 } from "./components/reader/ReaderComponents";
 import { defaultSettings, highlightColors } from "./constants";
 import {
+  applyDomHighlights,
   findSelectionOffset,
-  getContext,
+  getContextFromText,
   getHeadingPath,
+  getRenderedSelectionAnchor,
   renderMarkdownWithAnnotations,
   type SearchHighlight,
 } from "./markdown";
@@ -99,7 +100,7 @@ type ReaderBook = Book | BookSummary;
 
 export default function App() {
   const [books, setBooks] = useState<BookSummary[]>([]);
-  const [homeView, setHomeView] = useState<"grid" | "list" | "notes">("grid");
+  const [homeView, setHomeView] = useState<"grid" | "notes">("grid");
   const [notes, setNotes] = useState<NoteItem[]>([]);
   const [exportPresets, setExportPresets] = useState<ExportPreset[]>([]);
   const [workbenchBookId, setWorkbenchBookId] = useState("all");
@@ -251,13 +252,17 @@ export default function App() {
 
   const renderedHtml = useMemo(() => {
     if (!reader) return "";
-    return renderMarkdownWithAnnotations(
-      reader.content,
+    return renderMarkdownWithAnnotations(reader.content, reader.chapter.filePath);
+  }, [reader]);
+
+  useEffect(() => {
+    if (!reader || !articleRef.current) return;
+    applyDomHighlights(
+      articleRef.current,
       reader.annotations,
-      reader.chapter.filePath,
       activeSearchHighlight?.chapterVersionId === reader.version.id ? activeSearchHighlight : null,
     );
-  }, [activeSearchHighlight, reader]);
+  }, [activeSearchHighlight, reader, renderedHtml]);
 
   const activeAnnotation = useMemo(() => {
     if (!reader || !activeAnnotationId) return null;
@@ -556,21 +561,31 @@ export default function App() {
     if (!selection || selection.rangeCount === 0) return null;
     const range = selection.getRangeAt(0);
     if (!articleRef.current.contains(range.commonAncestorContainer)) return null;
-    const selectedText = selection.toString().trim();
+    const renderedSelection = getRenderedSelectionAnchor(articleRef.current, selection);
+    if (!renderedSelection) return null;
+    const selectedText = renderedSelection.selectedText;
     if (selectedText.length < 2) return null;
-    const startOffset = findSelectionOffset(reader.content, selectedText);
-    if (startOffset < 0) {
+    const sourceStartOffset = findSelectionOffset(reader.content, selectedText);
+    if (sourceStartOffset < 0 && renderedSelection.startOffset < 0) {
       if (showError) {
         setError("没有在章节源码中稳定定位到这段文本，请尝试少选一点上下文。");
       }
       return null;
     }
+    const startOffset = sourceStartOffset >= 0 ? sourceStartOffset : renderedSelection.startOffset;
+    const endOffset =
+      sourceStartOffset >= 0
+        ? sourceStartOffset + selectedText.length
+        : renderedSelection.endOffset;
     setError("");
     setActiveAnnotationId(null);
     return {
       selectedText,
       startOffset,
-      endOffset: startOffset + selectedText.length,
+      endOffset,
+      renderedStartOffset: renderedSelection.startOffset,
+      renderedEndOffset: renderedSelection.endOffset,
+      renderedText: renderedSelection.fullText,
       highlightColor: highlightColors[0],
       comment: "",
     };
@@ -584,10 +599,10 @@ export default function App() {
 
   async function saveDraft() {
     if (!reader || !draft) return;
-    const context = getContext(
-      reader.content,
-      draft.startOffset,
-      draft.endOffset,
+    const context = getContextFromText(
+      draft.renderedText,
+      draft.renderedStartOffset,
+      draft.renderedEndOffset,
       settings.annotationContextChars,
     );
     const payload: AnnotationPayload = {
@@ -597,6 +612,8 @@ export default function App() {
       selectedText: draft.selectedText,
       startOffset: draft.startOffset,
       endOffset: draft.endOffset,
+      renderedStartOffset: draft.renderedStartOffset,
+      renderedEndOffset: draft.renderedEndOffset,
       contextBefore: context.before,
       contextAfter: context.after,
       headingPath: getHeadingPath(reader.content, draft.startOffset),
@@ -976,13 +993,6 @@ export default function App() {
             <p className="home-subtitle">把 AI 生成的 Markdown 文档读完、批注好，再导出成下一轮 AI 可以直接消化的材料。</p>
           </div>
           <div className="header-actions">
-            <button
-              className={`icon-button ${homeView === "list" ? "active" : ""}`}
-              title="列表视图"
-              onClick={() => setHomeView("list")}
-            >
-              <LayoutList size={18} />
-            </button>
             <button
               className={`icon-button ${homeView === "grid" ? "active" : ""}`}
               title="画廊视图"

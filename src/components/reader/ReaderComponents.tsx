@@ -9,6 +9,9 @@ export interface SelectionDraft {
   selectedText: string;
   startOffset: number;
   endOffset: number;
+  renderedStartOffset: number;
+  renderedEndOffset: number;
+  renderedText: string;
   highlightColor: string;
   comment: string;
 }

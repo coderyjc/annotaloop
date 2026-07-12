@@ -371,10 +371,6 @@ button:disabled {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 }
 
-.book-collection.list {
-  grid-template-columns: 1fr;
-}
-
 .book-card {
   position: relative;
   display: grid;
@@ -432,12 +428,6 @@ button:disabled {
   width: 24px;
   height: 82px;
   background: var(--accent);
-}
-
-.book-collection.list .book-card {
-  min-height: 96px;
-  grid-template-columns: 1.4fr auto 1.2fr;
-  align-items: center;
 }
 
 .notes-board {

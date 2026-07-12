@@ -479,6 +479,8 @@ fn create_annotation(
             selected_text,
             start_offset,
             end_offset,
+            rendered_start_offset,
+            rendered_end_offset,
             context_before,
             context_after,
             heading_path,
@@ -488,7 +490,7 @@ fn create_annotation(
             status,
             created_at,
             updated_at
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, 'pending', ?14, ?14)
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, 'pending', ?16, ?16)
         "#,
         params![
             id,
@@ -498,6 +500,8 @@ fn create_annotation(
             payload.selected_text,
             payload.start_offset,
             payload.end_offset,
+            payload.rendered_start_offset,
+            payload.rendered_end_offset,
             payload.context_before,
             payload.context_after,
             payload.heading_path,
@@ -929,6 +933,34 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
         PRAGMA foreign_keys = ON;
         "#,
     );
+    let rendered_anchor_restore_result = if restore_result.is_ok()
+        && backup_has_column(&conn, "annotations", "rendered_start_offset")?
+        && backup_has_column(&conn, "annotations", "rendered_end_offset")?
+    {
+        conn.execute_batch(
+            r#"
+            UPDATE annotations
+            SET
+                rendered_start_offset = (
+                    SELECT rendered_start_offset
+                    FROM backup.annotations
+                    WHERE backup.annotations.id = annotations.id
+                ),
+                rendered_end_offset = (
+                    SELECT rendered_end_offset
+                    FROM backup.annotations
+                    WHERE backup.annotations.id = annotations.id
+                )
+            WHERE EXISTS (
+                SELECT 1
+                FROM backup.annotations
+                WHERE backup.annotations.id = annotations.id
+            );
+            "#,
+        )
+    } else {
+        Ok(())
+    };
     let preset_restore_result = if restore_result.is_ok() && backup_has_table(&conn, "export_presets")? {
         conn.execute_batch(
             r#"
@@ -945,6 +977,8 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
     };
     let detach_result = conn.execute_batch("DETACH DATABASE backup;");
     restore_result.map_err(|error| format!("Failed to restore backup: {error}"))?;
+    rendered_anchor_restore_result
+        .map_err(|error| format!("Failed to restore annotation anchors: {error}"))?;
     preset_restore_result.map_err(|error| format!("Failed to restore export presets: {error}"))?;
     detach_result.map_err(|error| format!("Failed to close backup database: {error}"))?;
 
@@ -1093,6 +1127,19 @@ fn backup_has_table(conn: &Connection, table_name: &str) -> AppResult<bool> {
         )
         .map_err(db_error)?;
     Ok(count > 0)
+}
+
+fn backup_has_column(conn: &Connection, table_name: &str, column_name: &str) -> AppResult<bool> {
+    let sql = format!("PRAGMA backup.table_info({table_name})");
+    let mut stmt = conn.prepare(&sql).map_err(db_error)?;
+    let mut rows = stmt.query([]).map_err(db_error)?;
+    while let Some(row) = rows.next().map_err(db_error)? {
+        let name: String = row.get(1).map_err(db_error)?;
+        if name == column_name {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }
 
 fn lowercase_with_byte_map(content: &str) -> (String, Vec<usize>) {
@@ -1485,6 +1532,8 @@ fn get_annotation_by_id(conn: &Connection, annotation_id: &str) -> AppResult<Ann
             selected_text,
             start_offset,
             end_offset,
+            rendered_start_offset,
+            rendered_end_offset,
             context_before,
             context_after,
             heading_path,
@@ -1543,6 +1592,8 @@ fn query_annotations_by_ids(conn: &Connection, annotation_ids: &[String]) -> App
             selected_text,
             start_offset,
             end_offset,
+            rendered_start_offset,
+            rendered_end_offset,
             context_before,
             context_after,
             heading_path,
@@ -1582,6 +1633,8 @@ where
             selected_text,
             start_offset,
             end_offset,
+            rendered_start_offset,
+            rendered_end_offset,
             context_before,
             context_after,
             heading_path,
@@ -1616,6 +1669,8 @@ fn load_export_rows(conn: &Connection, scope: &AnnotationScope) -> AppResult<Vec
                 a.selected_text,
                 a.start_offset,
                 a.end_offset,
+                a.rendered_start_offset,
+                a.rendered_end_offset,
                 a.context_before,
                 a.context_after,
                 a.heading_path,
@@ -1660,6 +1715,8 @@ fn load_export_rows(conn: &Connection, scope: &AnnotationScope) -> AppResult<Vec
             a.selected_text,
             a.start_offset,
             a.end_offset,
+            a.rendered_start_offset,
+            a.rendered_end_offset,
             a.context_before,
             a.context_after,
             a.heading_path,
@@ -1784,22 +1841,24 @@ fn map_annotation(row: &rusqlite::Row<'_>) -> rusqlite::Result<Annotation> {
         selected_text: row.get(4)?,
         start_offset: row.get(5)?,
         end_offset: row.get(6)?,
-        context_before: row.get(7)?,
-        context_after: row.get(8)?,
-        heading_path: row.get(9)?,
-        highlight_color: row.get(10)?,
-        comment: row.get(11)?,
-        tags: row.get(12)?,
-        status: row.get(13)?,
-        created_at: row.get(14)?,
-        updated_at: row.get(15)?,
+        rendered_start_offset: row.get(7)?,
+        rendered_end_offset: row.get(8)?,
+        context_before: row.get(9)?,
+        context_after: row.get(10)?,
+        heading_path: row.get(11)?,
+        highlight_color: row.get(12)?,
+        comment: row.get(13)?,
+        tags: row.get(14)?,
+        status: row.get(15)?,
+        created_at: row.get(16)?,
+        updated_at: row.get(17)?,
     })
 }
 
 fn map_export_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<ExportRow> {
     Ok(ExportRow {
         annotation: map_annotation(row)?,
-        chapter_title: row.get(16)?,
-        chapter_sort_index: row.get(17)?,
+        chapter_title: row.get(18)?,
+        chapter_sort_index: row.get(19)?,
     })
 }
