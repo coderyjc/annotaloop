@@ -1,4 +1,4 @@
-import { Archive, BookOpen, Check, Copy, Database, Download, FileText, Keyboard, MessageSquare, Palette, Pencil, Plus, RefreshCw, Save, Search, Trash2, X } from "lucide-react";
+import { AlertTriangle, Archive, BookOpen, Check, Copy, Database, Download, FileText, FolderOpen, Keyboard, MessageSquare, Palette, Pencil, Plus, RefreshCw, Save, Search, Trash2, X } from "lucide-react";
 import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useState } from "react";
 import {
   deleteChapterVersion,
@@ -111,24 +111,34 @@ const themeOptions = [
 export function BookContextMenu({
   menu,
   onRename,
+  onOpenFolder,
   onSync,
   onVersions,
+  onDelete,
 }: {
   menu: BookMenuState;
   onRename: () => void;
+  onOpenFolder: () => void;
   onSync: () => void;
   onVersions: () => void;
+  onDelete: () => void;
 }) {
   return (
     <div className="context-menu" style={{ left: menu.x, top: menu.y }} onClick={(event) => event.stopPropagation()}>
       <button onClick={onRename}>
         <Pencil size={15} /> 重命名书籍
       </button>
+      <button onClick={onOpenFolder}>
+        <FolderOpen size={15} /> 在资源管理器打开
+      </button>
       <button onClick={onSync}>
         <RefreshCw size={15} /> 同步文件夹
       </button>
       <button onClick={onVersions}>
         <Archive size={15} /> 版本管理
+      </button>
+      <button className="danger" onClick={onDelete}>
+        <Trash2 size={15} /> 删除书籍
       </button>
     </div>
   );
@@ -167,6 +177,47 @@ export function RenameBookModal({
           <button onClick={onClose}>取消</button>
           <button className="primary-button" onClick={onSave} disabled={busy || !draft.name.trim()}>
             <Save size={16} /> 保存
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export function DeleteBookModal({
+  book,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  book: BookSummary;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="annotation-modal compact-modal" onMouseDown={(event) => event.stopPropagation()}>
+        <header>
+          <div>
+            <p className="eyebrow danger-eyebrow">Danger Zone</p>
+            <h2>删除书籍</h2>
+          </div>
+          <button className="icon-button" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </header>
+        <div className="delete-book-warning">
+          <AlertTriangle size={22} />
+          <div>
+            <strong>{book.name}</strong>
+            <p>将从 Loop Book 中删除这本书的索引、章节版本、阅读进度和批注。原始 Markdown 文件夹不会被删除。</p>
+          </div>
+        </div>
+        <div className="modal-actions">
+          <button onClick={onClose}>取消</button>
+          <button className="danger" onClick={onConfirm} disabled={busy}>
+            <Trash2 size={16} /> 确认删除
           </button>
         </div>
       </section>

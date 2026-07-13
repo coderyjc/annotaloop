@@ -15,6 +15,7 @@ import {
   createAnnotation,
   createExportPreset,
   deleteAnnotation,
+  deleteBook,
   deleteExportPreset,
   exportAnnotations,
   exportBackup,
@@ -26,6 +27,7 @@ import {
   listExportPresets,
   listNoteItems,
   markAnnotationsStatus,
+  openBookFolder,
   pickBookFolder,
   readChapter,
   readChapterVersion,
@@ -43,6 +45,7 @@ import {
   BatchExportModal,
   BookContextMenu,
   type BookMenuState,
+  DeleteBookModal,
   HomeSettingsModal,
   RenameBookModal,
   type RenameBookState,
@@ -121,6 +124,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [bookMenu, setBookMenu] = useState<BookMenuState | null>(null);
   const [renameBookDraft, setRenameBookDraft] = useState<RenameBookState | null>(null);
+  const [deleteBookDraft, setDeleteBookDraft] = useState<BookSummary | null>(null);
   const [syncReport, setSyncReport] = useState<FolderSyncReport | null>(null);
   const [versionManagerBook, setVersionManagerBook] = useState<BookSummary | null>(null);
   const [batchExportOpen, setBatchExportOpen] = useState(false);
@@ -975,6 +979,41 @@ export default function App() {
     }
   }
 
+  async function openBookInExplorer(book: BookSummary) {
+    setBusy(true);
+    setError("");
+    setBookMenu(null);
+    try {
+      await openBookFolder(book.id);
+    } catch (err) {
+      setError(readError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmDeleteBook() {
+    if (!deleteBookDraft) return;
+    const deletedBook = deleteBookDraft;
+    setBusy(true);
+    setError("");
+    try {
+      await deleteBook(deletedBook.id);
+      setDeleteBookDraft(null);
+      if (workbenchBookId === deletedBook.id) {
+        setWorkbenchBookId("all");
+        setWorkbenchChapterId("all");
+        setSelectedNoteIds([]);
+      }
+      await Promise.all([refreshBooks(), refreshNotes()]);
+      setNotice(`已删除《${deletedBook.name}》的本地索引。`);
+    } catch (err) {
+      setError(readError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function syncBook(book: BookSummary) {
     setBusy(true);
     setError("");
@@ -1232,9 +1271,14 @@ export default function App() {
               setRenameBookDraft({ book: bookMenu.book, name: bookMenu.book.name });
               setBookMenu(null);
             }}
+            onOpenFolder={() => void openBookInExplorer(bookMenu.book)}
             onSync={() => void syncBook(bookMenu.book)}
             onVersions={() => {
               setVersionManagerBook(bookMenu.book);
+              setBookMenu(null);
+            }}
+            onDelete={() => {
+              setDeleteBookDraft(bookMenu.book);
               setBookMenu(null);
             }}
           />
@@ -1246,6 +1290,14 @@ export default function App() {
             onChange={(name) => setRenameBookDraft({ ...renameBookDraft, name })}
             onClose={() => setRenameBookDraft(null)}
             onSave={() => void saveBookRename()}
+          />
+        )}
+        {deleteBookDraft && (
+          <DeleteBookModal
+            book={deleteBookDraft}
+            busy={busy}
+            onClose={() => setDeleteBookDraft(null)}
+            onConfirm={() => void confirmDeleteBook()}
           />
         )}
         {syncReport && <SyncReportModal report={syncReport} onClose={() => setSyncReport(null)} />}

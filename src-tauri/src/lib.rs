@@ -44,6 +44,8 @@ pub fn run() {
             list_books,
             get_book,
             update_book_name,
+            delete_book,
+            open_book_folder,
             sync_book_folder,
             list_chapters,
             reorder_chapters,
@@ -113,6 +115,38 @@ if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
     #[cfg(not(target_os = "windows"))]
     {
         Ok(None)
+    }
+}
+
+fn open_folder_path(path: &PathBuf) -> AppResult<()> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+
+        std::process::Command::new("explorer.exe")
+            .arg(path)
+            .creation_flags(0x08000000)
+            .spawn()
+            .map_err(|error| format!("Failed to open folder in Explorer: {error}"))?;
+        return Ok(());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(path)
+            .spawn()
+            .map_err(|error| format!("Failed to open folder: {error}"))?;
+        return Ok(());
+    }
+
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(path)
+            .spawn()
+            .map_err(|error| format!("Failed to open folder: {error}"))?;
+        Ok(())
     }
 }
 
@@ -349,6 +383,33 @@ fn update_book_name(book_id: String, name: String, state: State<AppState>) -> Ap
     )
     .map_err(|error| format!("Failed to rename book: {error}"))?;
     get_book_by_id(&conn, &book_id)
+}
+
+#[tauri::command]
+fn delete_book(book_id: String, state: State<AppState>) -> AppResult<()> {
+    let conn = lock_conn(&state)?;
+    let changed = conn
+        .execute("DELETE FROM books WHERE id = ?1", params![book_id])
+        .map_err(|error| format!("Failed to delete book: {error}"))?;
+    if changed == 0 {
+        Err("Book was not found.".to_string())
+    } else {
+        Ok(())
+    }
+}
+
+#[tauri::command]
+fn open_book_folder(book_id: String, state: State<AppState>) -> AppResult<()> {
+    let conn = lock_conn(&state)?;
+    let book = get_book_by_id(&conn, &book_id)?;
+    drop(conn);
+
+    let root_path = PathBuf::from(&book.root_path);
+    if !root_path.is_dir() {
+        return Err("Book folder no longer exists.".to_string());
+    }
+
+    open_folder_path(&root_path)
 }
 
 #[tauri::command]

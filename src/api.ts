@@ -41,6 +41,14 @@ export async function updateBookName(bookId: string, name: string) {
   return invoke<Book>("update_book_name", { bookId, name });
 }
 
+export async function deleteBook(bookId: string) {
+  return invoke<void>("delete_book", { bookId });
+}
+
+export async function openBookFolder(bookId: string) {
+  return invoke<void>("open_book_folder", { bookId });
+}
+
 export async function syncBookFolder(bookId: string) {
   return invoke<FolderSyncReport>("sync_book_folder", { bookId });
 }

@@ -774,6 +774,17 @@ button:disabled {
   color: var(--accent);
 }
 
+.context-menu button.danger {
+  margin-top: 4px;
+  border-top: 1px solid color-mix(in srgb, #d84b3f 26%, transparent);
+  color: #a83221;
+}
+
+.context-menu button.danger:hover {
+  background: color-mix(in srgb, #d84b3f 14%, transparent);
+  color: #a83221;
+}
+
 .empty-state,
 .empty-panel {
   display: grid;
@@ -1589,6 +1600,37 @@ body.sorting-drag-active * {
   width: min(520px, calc(100vw - 44px));
 }
 
+.danger-eyebrow {
+  color: #a83221;
+}
+
+.delete-book-warning {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+  border: 1px solid color-mix(in srgb, #d84b3f 32%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, #fff7f5 76%, var(--paper));
+  color: var(--ink);
+  padding: 14px;
+}
+
+.delete-book-warning svg {
+  color: #a83221;
+}
+
+.delete-book-warning strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.delete-book-warning p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
 .home-settings-modal {
   width: min(760px, calc(100vw - 44px));
 }
@@ -2266,6 +2308,49 @@ body.sorting-drag-active * {
 .surface-ink .annotation-modal blockquote,
 .surface-ink .note-card p {
   color: var(--muted);
+}
+
+.theme-night .context-menu button.danger,
+.theme-night .modal-actions .danger,
+.theme-night .danger-eyebrow,
+.theme-night .delete-book-warning svg,
+.theme-midnight .context-menu button.danger,
+.theme-midnight .modal-actions .danger,
+.theme-midnight .danger-eyebrow,
+.theme-midnight .delete-book-warning svg,
+.theme-graphite .context-menu button.danger,
+.theme-graphite .modal-actions .danger,
+.theme-graphite .danger-eyebrow,
+.theme-graphite .delete-book-warning svg,
+.surface-ink .context-menu button.danger,
+.surface-ink .modal-actions .danger,
+.surface-ink .danger-eyebrow,
+.surface-ink .delete-book-warning svg {
+  color: #ffb4a8;
+}
+
+.theme-night .context-menu button.danger:hover,
+.theme-midnight .context-menu button.danger:hover,
+.theme-graphite .context-menu button.danger:hover,
+.surface-ink .context-menu button.danger:hover {
+  background: color-mix(in srgb, #ff8d7c 18%, transparent);
+  color: #ffd2cc;
+}
+
+.theme-night .modal-actions .danger,
+.theme-midnight .modal-actions .danger,
+.theme-graphite .modal-actions .danger,
+.surface-ink .modal-actions .danger {
+  border-color: color-mix(in srgb, #ff8d7c 50%, var(--line));
+  background: color-mix(in srgb, #ff8d7c 10%, var(--paper-strong));
+}
+
+.theme-night .delete-book-warning,
+.theme-midnight .delete-book-warning,
+.theme-graphite .delete-book-warning,
+.surface-ink .delete-book-warning {
+  border-color: color-mix(in srgb, #ff8d7c 42%, var(--line));
+  background: color-mix(in srgb, #ff8d7c 9%, var(--paper-strong));
 }
 
 .theme-night,
