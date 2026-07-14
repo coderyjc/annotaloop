@@ -81,7 +81,7 @@ import {
   TopNotice,
   type SelectionDraft,
 } from "./components/reader/ReaderComponents";
-import { defaultSettings, highlightColors } from "./constants";
+import { defaultSettings, getEffectiveThemeSeries, highlightColors } from "./constants";
 import {
   applyDomHighlights,
   findSelectionOffset,
@@ -134,6 +134,7 @@ type ViewTransitionDocument = Document & {
 
 const uiExitMs = 150;
 const readerMotionMs = 220;
+const noticeAutoDismissMs = 3000;
 
 function AppTitlebar({ title, subtitle }: { title: string; subtitle: string }) {
   function handleDrag(event: ReactMouseEvent<HTMLDivElement>) {
@@ -278,6 +279,12 @@ export default function App() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timeout = window.setTimeout(() => setNotice(""), noticeAutoDismissMs);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
 
   useEffect(() => {
     if (activeBook) {
@@ -1557,10 +1564,12 @@ export default function App() {
     }
   }
 
+  const effectiveThemeSeries = getEffectiveThemeSeries(settings.themeSeries);
+
   if (!activeBook) {
     return (
       <div
-        className={`app-shell home-shell theme-${settings.theme} surface-${settings.surface}`}
+        className={`app-shell home-shell series-${effectiveThemeSeries} theme-${settings.theme} surface-${settings.surface}`}
         onContextMenu={suppressNativeContextMenu}
       >
         <AppTitlebar title="Loop Book" subtitle="首页" />
@@ -1770,7 +1779,7 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell reader-shell theme-${settings.theme} surface-${settings.surface} ${
+      className={`app-shell reader-shell series-${effectiveThemeSeries} theme-${settings.theme} surface-${settings.surface} ${
         isLeftCollapsed ? "left-collapsed" : ""
       } ${isRightCollapsed ? "right-collapsed" : ""} ${
         resizeTarget ? "resizing-panes" : ""

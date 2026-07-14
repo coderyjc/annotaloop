@@ -1,6 +1,6 @@
 [package]
 name = "loop-book"
-version = "0.4.0"
+version = "0.4.1"
 description = "A local-first Markdown reader for annotation loops."
 authors = ["Loop Book"]
 edition = "2021"

@@ -103,6 +103,7 @@ export interface ReadChapterResponse {
 
 export interface AppSettings {
   annotationContextChars: number;
+  themeSeries: string;
   theme: string;
   fontFamily: string;
   fontSize: number;

@@ -80,6 +80,7 @@ pub fn init_database(db_path: &Path) -> Result<Connection, rusqlite::Error> {
         CREATE TABLE IF NOT EXISTS settings (
             id INTEGER PRIMARY KEY CHECK (id = 1),
             annotation_context_chars INTEGER NOT NULL,
+            theme_series TEXT NOT NULL DEFAULT 'classic',
             theme TEXT NOT NULL,
             font_family TEXT NOT NULL,
             font_size INTEGER NOT NULL,
@@ -150,6 +151,12 @@ pub fn init_database(db_path: &Path) -> Result<Connection, rusqlite::Error> {
     ensure_column(
         &conn,
         "settings",
+        "theme_series",
+        "ALTER TABLE settings ADD COLUMN theme_series TEXT NOT NULL DEFAULT 'classic'",
+    )?;
+    ensure_column(
+        &conn,
+        "settings",
         "focus_mode",
         "ALTER TABLE settings ADD COLUMN focus_mode INTEGER NOT NULL DEFAULT 0",
     )?;
@@ -179,6 +186,7 @@ pub fn init_database(db_path: &Path) -> Result<Connection, rusqlite::Error> {
         INSERT OR IGNORE INTO settings (
             id,
             annotation_context_chars,
+            theme_series,
             theme,
             font_family,
             font_size,
@@ -190,7 +198,7 @@ pub fn init_database(db_path: &Path) -> Result<Connection, rusqlite::Error> {
             border_style,
             focus_mode,
             shortcut_bindings
-        ) VALUES (1, 100, 'paper', 'Literata, Georgia, serif', 18, 1.72, 820, 52, 18, 'warm', 'hairline', 0, '{"search":"Ctrl+K","nextChapter":"N","previousChapter":"P","highlight":"H","export":"E","toggleLeft":"[","toggleRight":"]"}')
+        ) VALUES (1, 100, 'classic', 'paper', 'Literata, Georgia, serif', 18, 1.72, 820, 52, 18, 'warm', 'hairline', 0, '{"search":"Ctrl+K","nextChapter":"N","previousChapter":"P","highlight":"H","export":"E","toggleLeft":"[","toggleRight":"]"}')
         "#,
         [],
     )?;

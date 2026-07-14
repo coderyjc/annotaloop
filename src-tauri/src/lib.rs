@@ -1069,6 +1069,27 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
     } else {
         Ok(())
     };
+    let theme_series_restore_result = if restore_result.is_ok()
+        && backup_has_column(&conn, "settings", "theme_series")?
+    {
+        conn.execute_batch(
+            r#"
+            UPDATE settings
+            SET theme_series = (
+                SELECT theme_series
+                FROM backup.settings
+                WHERE backup.settings.id = settings.id
+            )
+            WHERE EXISTS (
+                SELECT 1
+                FROM backup.settings
+                WHERE backup.settings.id = settings.id
+            );
+            "#,
+        )
+    } else {
+        Ok(())
+    };
     let pinned_restore_result = if restore_result.is_ok()
         && backup_has_column(&conn, "books", "is_pinned")?
     {
@@ -1110,6 +1131,8 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
         .map_err(|error| format!("Failed to restore annotation anchors: {error}"))?;
     focus_mode_restore_result
         .map_err(|error| format!("Failed to restore focus mode setting: {error}"))?;
+    theme_series_restore_result
+        .map_err(|error| format!("Failed to restore theme series setting: {error}"))?;
     pinned_restore_result
         .map_err(|error| format!("Failed to restore pinned books: {error}"))?;
     preset_restore_result.map_err(|error| format!("Failed to restore export presets: {error}"))?;
@@ -1135,23 +1158,25 @@ fn update_settings(patch: SettingsPatch, state: State<AppState>) -> AppResult<Ap
         UPDATE settings
         SET
             annotation_context_chars = ?1,
-            theme = ?2,
-            font_family = ?3,
-            font_size = ?4,
-            line_height = ?5,
-            content_width = ?6,
-            page_padding = ?7,
-            paragraph_spacing = ?8,
-            surface = ?9,
-            border_style = ?10,
-            focus_mode = ?11,
-            shortcut_bindings = ?12
+            theme_series = ?2,
+            theme = ?3,
+            font_family = ?4,
+            font_size = ?5,
+            line_height = ?6,
+            content_width = ?7,
+            page_padding = ?8,
+            paragraph_spacing = ?9,
+            surface = ?10,
+            border_style = ?11,
+            focus_mode = ?12,
+            shortcut_bindings = ?13
         WHERE id = 1
         "#,
         params![
             patch
                 .annotation_context_chars
                 .unwrap_or(current.annotation_context_chars),
+            patch.theme_series.unwrap_or(current.theme_series),
             patch.theme.unwrap_or(current.theme),
             patch.font_family.unwrap_or(current.font_family),
             patch.font_size.unwrap_or(current.font_size),
@@ -1886,6 +1911,7 @@ fn load_settings(conn: &Connection) -> AppResult<AppSettings> {
         r#"
         SELECT
             annotation_context_chars,
+            theme_series,
             theme,
             font_family,
             font_size,
@@ -1904,17 +1930,18 @@ fn load_settings(conn: &Connection) -> AppResult<AppSettings> {
         |row| {
             Ok(AppSettings {
                 annotation_context_chars: row.get(0)?,
-                theme: row.get(1)?,
-                font_family: row.get(2)?,
-                font_size: row.get(3)?,
-                line_height: row.get(4)?,
-                content_width: row.get(5)?,
-                page_padding: row.get(6)?,
-                paragraph_spacing: row.get(7)?,
-                surface: row.get(8)?,
-                border_style: row.get(9)?,
-                focus_mode: row.get(10)?,
-                shortcut_bindings: row.get(11)?,
+                theme_series: row.get(1)?,
+                theme: row.get(2)?,
+                font_family: row.get(3)?,
+                font_size: row.get(4)?,
+                line_height: row.get(5)?,
+                content_width: row.get(6)?,
+                page_padding: row.get(7)?,
+                paragraph_spacing: row.get(8)?,
+                surface: row.get(9)?,
+                border_style: row.get(10)?,
+                focus_mode: row.get(11)?,
+                shortcut_bindings: row.get(12)?,
             })
         },
     )

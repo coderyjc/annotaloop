@@ -8,7 +8,13 @@ import {
   searchBookContent,
   updateChapterVersionLabel,
 } from "../../api";
-import { defaultShortcutBindings } from "../../constants";
+import {
+  defaultShortcutBindings,
+  getEffectiveThemeSeries,
+  getDefaultThemeForSeries,
+  getThemesForSeries,
+  visibleThemeSeriesOptions,
+} from "../../constants";
 import { locateAnnotationInText } from "../../markdown";
 import type {
   Annotation,
@@ -357,6 +363,11 @@ export function HomeSettingsModal({
   };
   const selectedPreset =
     exportPresets.find((preset) => preset.id === editingPresetId) ?? null;
+  const activeThemeSeries = getEffectiveThemeSeries(settings.themeSeries);
+  const activeSeriesOption =
+    visibleThemeSeriesOptions.find((series) => series.id === activeThemeSeries) ??
+    visibleThemeSeriesOptions[0];
+  const availableThemes = getThemesForSeries(activeThemeSeries);
 
   useEffect(() => {
     if (!editingPresetId) return;
@@ -437,8 +448,48 @@ export function HomeSettingsModal({
           <h3>
             <Palette size={16} /> 主题
           </h3>
-          <div className="theme-choice-grid">
-            {themeOptions.map((option) => (
+          <div className="theme-picker-layout">
+          <aside className="theme-series-list" aria-label="主题系列">
+            {visibleThemeSeriesOptions.map((series) => (
+              <button
+                key={series.id}
+                type="button"
+                className={`theme-choice series-choice ${
+                  activeThemeSeries === series.id ? "active" : ""
+                }`}
+                onClick={() =>
+                  onChange({
+                    themeSeries: series.id,
+                    theme: getDefaultThemeForSeries(series.id),
+                  })
+                }
+              >
+                <span
+                  className="theme-preview series-preview"
+                  style={{
+                    background: series.previewBg,
+                    color: series.previewInk,
+                    borderColor: series.accent,
+                  }}
+                >
+                  <i style={{ background: series.accent }} />
+                  <i />
+                </span>
+                <span>
+                  <strong>{series.label}</strong>
+                  <small>{series.description}</small>
+                </span>
+                {activeThemeSeries === series.id && <Check size={15} />}
+              </button>
+            ))}
+          </aside>
+          <div className="theme-skin-panel">
+            <div className="theme-skin-heading">
+              <strong>{activeSeriesOption.label}</strong>
+              <small>{activeSeriesOption.description}</small>
+            </div>
+            <div className="theme-choice-grid theme-skin-grid">
+            {availableThemes.map((option) => (
               <button
                 key={option.value}
                 type="button"
@@ -463,6 +514,8 @@ export function HomeSettingsModal({
                 {settings.theme === option.value && <Check size={15} />}
               </button>
             ))}
+            </div>
+          </div>
           </div>
         </section>
 
