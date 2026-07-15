@@ -976,6 +976,953 @@ button:disabled {
   color-scheme: dark;
 }
 
+.theme-glacier {
+  --ink: #102532;
+  --muted: #587481;
+  --line: rgba(57, 112, 142, 0.24);
+  --paper: rgba(255, 255, 255, 0.7);
+  --paper-strong: rgba(255, 255, 255, 0.88);
+  --accent: #58aee8;
+  --teal: #7fd7d0;
+  --blue: #7da8ff;
+  --shell-bg: #eaf6ff;
+  --panel-bg: rgba(255, 255, 255, 0.46);
+  --toolbar-bg: rgba(255, 255, 255, 0.52);
+  --scroll-track: rgba(16, 37, 50, 0.08);
+  --scroll-thumb: rgba(88, 174, 232, 0.56);
+  --selection-bg: rgba(88, 174, 232, 0.22);
+  --selection-ink: #102532;
+  --button-bg: rgba(255, 255, 255, 0.56);
+  --button-bg-hover: rgba(255, 255, 255, 0.84);
+  --button-border: rgba(57, 112, 142, 0.3);
+  --button-active-bg: rgba(255, 255, 255, 0.72);
+  --button-primary-bg: rgba(88, 174, 232, 0.22);
+  --button-primary-bg-hover: rgba(88, 174, 232, 0.32);
+  --button-primary-border: rgba(88, 174, 232, 0.46);
+  --button-primary-ink: #1e6695;
+  --drop-bg: rgba(255, 255, 255, 0.78);
+  --drop-bg-hover: rgba(255, 255, 255, 0.92);
+  --drop-border: rgba(57, 112, 142, 0.34);
+  --empty-bg: rgba(255, 255, 255, 0.44);
+  --empty-border: rgba(57, 112, 142, 0.26);
+  --empty-ink: #526f7d;
+  --shadow: 0 24px 74px rgba(65, 128, 165, 0.14);
+  color-scheme: light;
+}
+
+.theme-pearl {
+  --ink: #2a2020;
+  --muted: #776865;
+  --line: rgba(143, 96, 90, 0.24);
+  --paper: rgba(255, 252, 248, 0.72);
+  --paper-strong: rgba(255, 255, 255, 0.9);
+  --accent: #d98f86;
+  --teal: #9fc7b7;
+  --blue: #9aaee3;
+  --shell-bg: #f9f1ea;
+  --panel-bg: rgba(255, 252, 248, 0.48);
+  --toolbar-bg: rgba(255, 252, 248, 0.54);
+  --scroll-track: rgba(42, 32, 32, 0.08);
+  --scroll-thumb: rgba(217, 143, 134, 0.54);
+  --selection-bg: rgba(217, 143, 134, 0.22);
+  --selection-ink: #2a2020;
+  --button-bg: rgba(255, 252, 248, 0.58);
+  --button-bg-hover: rgba(255, 255, 255, 0.86);
+  --button-border: rgba(143, 96, 90, 0.3);
+  --button-active-bg: rgba(255, 255, 255, 0.72);
+  --button-primary-bg: rgba(217, 143, 134, 0.22);
+  --button-primary-bg-hover: rgba(217, 143, 134, 0.32);
+  --button-primary-border: rgba(217, 143, 134, 0.46);
+  --button-primary-ink: #8d463f;
+  --drop-bg: rgba(255, 252, 248, 0.8);
+  --drop-bg-hover: rgba(255, 255, 255, 0.92);
+  --drop-border: rgba(143, 96, 90, 0.34);
+  --empty-bg: rgba(255, 252, 248, 0.46);
+  --empty-border: rgba(143, 96, 90, 0.26);
+  --empty-ink: #74645f;
+  --shadow: 0 24px 74px rgba(135, 91, 84, 0.13);
+  color-scheme: light;
+}
+
+.theme-lagoon {
+  --ink: #12322e;
+  --muted: #5b7a73;
+  --line: rgba(40, 133, 120, 0.24);
+  --paper: rgba(252, 255, 253, 0.7);
+  --paper-strong: rgba(255, 255, 255, 0.9);
+  --accent: #28b9a7;
+  --teal: #28b9a7;
+  --blue: #5b9fe5;
+  --shell-bg: #e8fbf7;
+  --panel-bg: rgba(255, 255, 255, 0.46);
+  --toolbar-bg: rgba(255, 255, 255, 0.52);
+  --scroll-track: rgba(18, 50, 46, 0.08);
+  --scroll-thumb: rgba(40, 185, 167, 0.54);
+  --selection-bg: rgba(40, 185, 167, 0.22);
+  --selection-ink: #12322e;
+  --button-bg: rgba(255, 255, 255, 0.56);
+  --button-bg-hover: rgba(255, 255, 255, 0.84);
+  --button-border: rgba(40, 133, 120, 0.3);
+  --button-active-bg: rgba(255, 255, 255, 0.72);
+  --button-primary-bg: rgba(40, 185, 167, 0.22);
+  --button-primary-bg-hover: rgba(40, 185, 167, 0.32);
+  --button-primary-border: rgba(40, 185, 167, 0.46);
+  --button-primary-ink: #117265;
+  --drop-bg: rgba(255, 255, 255, 0.78);
+  --drop-bg-hover: rgba(255, 255, 255, 0.92);
+  --drop-border: rgba(40, 133, 120, 0.34);
+  --empty-bg: rgba(255, 255, 255, 0.44);
+  --empty-border: rgba(40, 133, 120, 0.26);
+  --empty-ink: #52756d;
+  --shadow: 0 24px 74px rgba(45, 143, 131, 0.14);
+  color-scheme: light;
+}
+
+.theme-smoke {
+  --ink: #eef3f5;
+  --muted: #aab5bc;
+  --line: rgba(226, 237, 244, 0.18);
+  --paper: rgba(24, 29, 36, 0.7);
+  --paper-strong: rgba(36, 43, 52, 0.84);
+  --accent: #a6c8ff;
+  --teal: #8cd8d4;
+  --blue: #a6c8ff;
+  --shell-bg: #15191f;
+  --panel-bg: rgba(28, 34, 42, 0.52);
+  --toolbar-bg: rgba(21, 25, 31, 0.66);
+  --scroll-track: rgba(238, 243, 245, 0.08);
+  --scroll-thumb: rgba(166, 200, 255, 0.56);
+  --selection-bg: rgba(166, 200, 255, 0.28);
+  --selection-ink: #f6fbff;
+  --button-bg: rgba(36, 43, 52, 0.6);
+  --button-bg-hover: rgba(48, 57, 68, 0.78);
+  --button-border: rgba(226, 237, 244, 0.2);
+  --button-ink: #f3f8fb;
+  --button-active-bg: rgba(166, 200, 255, 0.18);
+  --button-primary-bg: rgba(166, 200, 255, 0.24);
+  --button-primary-bg-hover: rgba(166, 200, 255, 0.34);
+  --button-primary-border: rgba(166, 200, 255, 0.44);
+  --button-primary-ink: #d9e8ff;
+  --drop-bg: rgba(36, 43, 52, 0.82);
+  --drop-bg-hover: rgba(48, 57, 68, 0.9);
+  --drop-border: rgba(226, 237, 244, 0.2);
+  --empty-bg: rgba(36, 43, 52, 0.46);
+  --empty-border: rgba(226, 237, 244, 0.18);
+  --empty-ink: #c4ced4;
+  --shadow: 0 28px 82px rgba(4, 8, 12, 0.32);
+  color-scheme: dark;
+}
+
+.theme-airmap {
+  --ink: #172633;
+  --muted: #60727c;
+  --line: #c7d9e1;
+  --paper: #fbfdff;
+  --paper-strong: #ffffff;
+  --accent: #2f82a2;
+  --teal: #4b9a8c;
+  --blue: #466fbd;
+  --shell-bg: #eef6fa;
+  --panel-bg: rgba(247, 252, 255, 0.9);
+  --toolbar-bg: rgba(232, 243, 249, 0.9);
+  --scroll-track: rgba(47, 130, 162, 0.12);
+  --scroll-thumb: rgba(47, 130, 162, 0.62);
+  --selection-bg: rgba(47, 130, 162, 0.24);
+  --selection-ink: #172633;
+  --button-bg: color-mix(in srgb, #ffffff 88%, #dff0f7);
+  --button-bg-hover: #ffffff;
+  --button-border: #bed5df;
+  --button-active-bg: color-mix(in srgb, #ffffff 78%, var(--accent) 13%);
+  --button-primary-bg: color-mix(in srgb, #ffffff 84%, var(--accent) 8%);
+  --button-primary-bg-hover: color-mix(in srgb, #ffffff 74%, var(--accent) 16%);
+  --button-primary-border: color-mix(in srgb, var(--accent) 38%, #bed5df);
+  --button-primary-ink: #1e607b;
+  --drop-bg: color-mix(in srgb, #ffffff 84%, var(--accent) 7%);
+  --drop-bg-hover: color-mix(in srgb, #ffffff 72%, var(--accent) 15%);
+  --drop-border: color-mix(in srgb, var(--accent) 44%, #bed5df);
+  --empty-bg: rgba(251, 253, 255, 0.72);
+  --empty-border: #b6cbd5;
+  --empty-ink: #5e737e;
+  color-scheme: light;
+}
+
+.theme-radar {
+  --ink: #173027;
+  --muted: #60746b;
+  --line: #c9d9cf;
+  --paper: #fbfff9;
+  --paper-strong: #ffffff;
+  --accent: #3f8c65;
+  --teal: #3f8c65;
+  --blue: #5177ad;
+  --shell-bg: #edf4e9;
+  --panel-bg: rgba(248, 253, 246, 0.9);
+  --toolbar-bg: rgba(232, 242, 228, 0.9);
+  --scroll-track: rgba(63, 140, 101, 0.12);
+  --scroll-thumb: rgba(63, 140, 101, 0.62);
+  --selection-bg: rgba(63, 140, 101, 0.24);
+  --selection-ink: #173027;
+  --button-bg: color-mix(in srgb, #ffffff 88%, #dfeee4);
+  --button-bg-hover: #ffffff;
+  --button-border: #bfd3c6;
+  --button-active-bg: color-mix(in srgb, #ffffff 78%, var(--accent) 13%);
+  --button-primary-bg: color-mix(in srgb, #ffffff 84%, var(--accent) 8%);
+  --button-primary-bg-hover: color-mix(in srgb, #ffffff 74%, var(--accent) 16%);
+  --button-primary-border: color-mix(in srgb, var(--accent) 38%, #bfd3c6);
+  --button-primary-ink: #256446;
+  --drop-bg: color-mix(in srgb, #ffffff 84%, var(--accent) 7%);
+  --drop-bg-hover: color-mix(in srgb, #ffffff 72%, var(--accent) 15%);
+  --drop-border: color-mix(in srgb, var(--accent) 44%, #bfd3c6);
+  --empty-bg: rgba(251, 255, 249, 0.72);
+  --empty-border: #b8cbbd;
+  --empty-ink: #5b7165;
+  color-scheme: light;
+}
+
+.theme-beacon {
+  --ink: #24251f;
+  --muted: #716b5d;
+  --line: #d8cdbc;
+  --paper: #fffaf0;
+  --paper-strong: #ffffff;
+  --accent: #d17a28;
+  --teal: #4f8e82;
+  --blue: #2d5d99;
+  --shell-bg: #f7f2e6;
+  --panel-bg: rgba(255, 249, 238, 0.91);
+  --toolbar-bg: rgba(240, 232, 216, 0.92);
+  --scroll-track: rgba(209, 122, 40, 0.12);
+  --scroll-thumb: rgba(209, 122, 40, 0.64);
+  --selection-bg: rgba(209, 122, 40, 0.24);
+  --selection-ink: #24251f;
+  --button-bg: color-mix(in srgb, #ffffff 86%, #f1dfc2);
+  --button-bg-hover: #ffffff;
+  --button-border: #d1c2aa;
+  --button-active-bg: color-mix(in srgb, #ffffff 78%, var(--accent) 13%);
+  --button-primary-bg: color-mix(in srgb, #ffffff 84%, var(--accent) 8%);
+  --button-primary-bg-hover: color-mix(in srgb, #ffffff 72%, var(--accent) 17%);
+  --button-primary-border: color-mix(in srgb, var(--accent) 40%, #d1c2aa);
+  --button-primary-ink: #8f4f17;
+  --drop-bg: color-mix(in srgb, #ffffff 82%, var(--accent) 8%);
+  --drop-bg-hover: color-mix(in srgb, #ffffff 70%, var(--accent) 16%);
+  --drop-border: color-mix(in srgb, var(--accent) 44%, #d1c2aa);
+  --empty-bg: rgba(255, 250, 240, 0.72);
+  --empty-border: #c8b89c;
+  --empty-ink: #716859;
+  color-scheme: light;
+}
+
+.theme-redcockpit {
+  --ink: #f4e7d3;
+  --muted: #c0ac98;
+  --line: #453745;
+  --paper: #151923;
+  --paper-strong: #222330;
+  --accent: #ff6b55;
+  --teal: #5fc2b5;
+  --blue: #8ba8ff;
+  --shell-bg: #10141c;
+  --panel-bg: rgba(18, 23, 32, 0.95);
+  --toolbar-bg: rgba(13, 17, 25, 0.95);
+  --scroll-track: rgba(244, 231, 211, 0.08);
+  --scroll-thumb: rgba(255, 107, 85, 0.7);
+  --selection-bg: rgba(255, 107, 85, 0.32);
+  --selection-ink: #fff0e2;
+  --button-bg: #171c27;
+  --button-bg-hover: #232938;
+  --button-border: #4d3e4d;
+  --button-ink: #fff0df;
+  --button-active-bg: color-mix(in srgb, #171c27 68%, var(--accent) 22%);
+  --button-primary-bg: #2a2430;
+  --button-primary-bg-hover: #382b35;
+  --button-primary-border: #72463e;
+  --button-primary-ink: #ffd6ca;
+  --drop-bg: color-mix(in srgb, #171c27 84%, var(--accent) 9%);
+  --drop-bg-hover: color-mix(in srgb, #212637 70%, var(--accent) 18%);
+  --drop-border: color-mix(in srgb, var(--accent) 46%, #453745);
+  --empty-bg: rgba(35, 39, 51, 0.78);
+  --empty-border: #654b4a;
+  --empty-ink: #f1d8c6;
+  color-scheme: dark;
+}
+
+.theme-bamboo {
+  --ink: #25271e;
+  --muted: #6d715f;
+  --line: #d4ceb8;
+  --paper: #fffaf0;
+  --paper-strong: #fffdf7;
+  --accent: #557f52;
+  --teal: #557f52;
+  --blue: #566f9e;
+  --shell-bg: #f5f1e5;
+  --panel-bg: rgba(250, 246, 235, 0.92);
+  --toolbar-bg: rgba(238, 233, 218, 0.92);
+  --scroll-track: rgba(85, 127, 82, 0.11);
+  --scroll-thumb: rgba(85, 127, 82, 0.6);
+  --selection-bg: rgba(85, 127, 82, 0.23);
+  --selection-ink: #25271e;
+  --button-bg: #fff9ec;
+  --button-bg-hover: #fffdf7;
+  --button-border: #cbbf9f;
+  --button-active-bg: color-mix(in srgb, #fffdf7 78%, var(--accent) 13%);
+  --button-primary-bg: color-mix(in srgb, #fffdf7 84%, var(--accent) 8%);
+  --button-primary-bg-hover: color-mix(in srgb, #fffdf7 74%, var(--accent) 16%);
+  --button-primary-border: color-mix(in srgb, var(--accent) 38%, #cbbf9f);
+  --button-primary-ink: #3f623d;
+  --drop-bg: color-mix(in srgb, #fffdf7 82%, var(--accent) 7%);
+  --drop-bg-hover: color-mix(in srgb, #fffdf7 70%, var(--accent) 15%);
+  --drop-border: color-mix(in srgb, var(--accent) 42%, #cbbf9f);
+  --empty-bg: rgba(255, 249, 236, 0.72);
+  --empty-border: #c4b796;
+  --empty-ink: #696d5a;
+  color-scheme: light;
+}
+
+.theme-xuanpaper {
+  --ink: #28241d;
+  --muted: #6f6a60;
+  --line: #d7cfbd;
+  --paper: #fffdf5;
+  --paper-strong: #ffffff;
+  --accent: #687b73;
+  --teal: #5f8074;
+  --blue: #667792;
+  --shell-bg: #f8f4ea;
+  --panel-bg: rgba(252, 248, 239, 0.92);
+  --toolbar-bg: rgba(239, 234, 223, 0.92);
+  --scroll-track: rgba(104, 123, 115, 0.1);
+  --scroll-thumb: rgba(104, 123, 115, 0.58);
+  --selection-bg: rgba(104, 123, 115, 0.22);
+  --selection-ink: #28241d;
+  --button-bg: #fffaf0;
+  --button-bg-hover: #ffffff;
+  --button-border: #d0c5b1;
+  --button-active-bg: color-mix(in srgb, #ffffff 78%, var(--accent) 13%);
+  --button-primary-bg: color-mix(in srgb, #ffffff 84%, var(--accent) 8%);
+  --button-primary-bg-hover: color-mix(in srgb, #ffffff 74%, var(--accent) 16%);
+  --button-primary-border: color-mix(in srgb, var(--accent) 38%, #d0c5b1);
+  --button-primary-ink: #4f625b;
+  --drop-bg: color-mix(in srgb, #ffffff 82%, var(--accent) 7%);
+  --drop-bg-hover: color-mix(in srgb, #ffffff 70%, var(--accent) 15%);
+  --drop-border: color-mix(in srgb, var(--accent) 42%, #d0c5b1);
+  --empty-bg: rgba(255, 250, 240, 0.72);
+  --empty-border: #c9bea8;
+  --empty-ink: #6b665c;
+  color-scheme: light;
+}
+
+.theme-cinnabar {
+  --ink: #2c241c;
+  --muted: #745f4d;
+  --line: #dcc7ac;
+  --paper: #fff4e3;
+  --paper-strong: #fffaf1;
+  --accent: #b24737;
+  --teal: #587e68;
+  --blue: #596f9a;
+  --shell-bg: #f6ead9;
+  --panel-bg: rgba(253, 241, 225, 0.92);
+  --toolbar-bg: rgba(238, 224, 205, 0.92);
+  --scroll-track: rgba(178, 71, 55, 0.11);
+  --scroll-thumb: rgba(178, 71, 55, 0.62);
+  --selection-bg: rgba(178, 71, 55, 0.24);
+  --selection-ink: #2c241c;
+  --button-bg: #fff2dd;
+  --button-bg-hover: #fffaf1;
+  --button-border: #d3bea0;
+  --button-active-bg: color-mix(in srgb, #fffaf1 76%, var(--accent) 14%);
+  --button-primary-bg: color-mix(in srgb, #fffaf1 82%, var(--accent) 9%);
+  --button-primary-bg-hover: color-mix(in srgb, #fffaf1 70%, var(--accent) 18%);
+  --button-primary-border: color-mix(in srgb, var(--accent) 40%, #d3bea0);
+  --button-primary-ink: #7b2f24;
+  --drop-bg: color-mix(in srgb, #fffaf1 82%, var(--accent) 8%);
+  --drop-bg-hover: color-mix(in srgb, #fffaf1 70%, var(--accent) 16%);
+  --drop-border: color-mix(in srgb, var(--accent) 44%, #d3bea0);
+  --empty-bg: rgba(255, 242, 221, 0.72);
+  --empty-border: #cbb493;
+  --empty-ink: #715b48;
+  color-scheme: light;
+}
+
+.theme-inklamp {
+  --ink: #f0e3c7;
+  --muted: #c2b18f;
+  --line: #4c4033;
+  --paper: #1f1a14;
+  --paper-strong: #2b241a;
+  --accent: #c45b46;
+  --teal: #8ba98d;
+  --blue: #9aa9cf;
+  --shell-bg: #15130f;
+  --panel-bg: rgba(29, 24, 18, 0.95);
+  --toolbar-bg: rgba(22, 18, 13, 0.95);
+  --scroll-track: rgba(240, 227, 199, 0.08);
+  --scroll-thumb: rgba(196, 91, 70, 0.68);
+  --selection-bg: rgba(196, 91, 70, 0.32);
+  --selection-ink: #fff0d2;
+  --button-bg: #241d15;
+  --button-bg-hover: #30271c;
+  --button-border: #554634;
+  --button-ink: #f8e8c8;
+  --button-active-bg: color-mix(in srgb, #241d15 70%, var(--accent) 20%);
+  --button-primary-bg: #332418;
+  --button-primary-bg-hover: #422d1d;
+  --button-primary-border: #704738;
+  --button-primary-ink: #ffd9c9;
+  --drop-bg: color-mix(in srgb, #241d15 84%, var(--accent) 9%);
+  --drop-bg-hover: color-mix(in srgb, #2e2419 70%, var(--accent) 18%);
+  --drop-border: color-mix(in srgb, var(--accent) 46%, #4c4033);
+  --empty-bg: rgba(43, 35, 25, 0.8);
+  --empty-border: #6d513e;
+  --empty-ink: #ead5b1;
+  color-scheme: dark;
+}
+
+.theme-contactsheet {
+  --ink: #25211c;
+  --muted: #6e6255;
+  --line: #d2c4b3;
+  --paper: #fff8ec;
+  --paper-strong: #fffdf6;
+  --accent: #9a4f3c;
+  --teal: #5f7e73;
+  --blue: #5a6f90;
+  --shell-bg: #f2eee5;
+  --panel-bg: rgba(250, 244, 234, 0.92);
+  --toolbar-bg: rgba(234, 226, 214, 0.92);
+  --scroll-track: rgba(154, 79, 60, 0.11);
+  --scroll-thumb: rgba(154, 79, 60, 0.6);
+  --selection-bg: rgba(154, 79, 60, 0.23);
+  --selection-ink: #25211c;
+  --button-bg: #fff6e8;
+  --button-bg-hover: #fffdf6;
+  --button-border: #c8b8a5;
+  --button-active-bg: color-mix(in srgb, #fffdf6 76%, var(--accent) 13%);
+  --button-primary-bg: color-mix(in srgb, #fffdf6 82%, var(--accent) 8%);
+  --button-primary-bg-hover: color-mix(in srgb, #fffdf6 70%, var(--accent) 16%);
+  --button-primary-border: color-mix(in srgb, var(--accent) 40%, #c8b8a5);
+  --button-primary-ink: #713728;
+  --drop-bg: color-mix(in srgb, #fffdf6 82%, var(--accent) 8%);
+  --drop-bg-hover: color-mix(in srgb, #fffdf6 70%, var(--accent) 16%);
+  --drop-border: color-mix(in srgb, var(--accent) 44%, #c8b8a5);
+  --empty-bg: rgba(255, 246, 232, 0.72);
+  --empty-border: #bfae9a;
+  --empty-ink: #6c5f52;
+  color-scheme: light;
+}
+
+.theme-silverprint {
+  --ink: #20242a;
+  --muted: #666d73;
+  --line: #cbd0d0;
+  --paper: #fbfbf8;
+  --paper-strong: #ffffff;
+  --accent: #5f7188;
+  --teal: #607f7a;
+  --blue: #5f7188;
+  --shell-bg: #eef0ed;
+  --panel-bg: rgba(248, 249, 246, 0.92);
+  --toolbar-bg: rgba(232, 235, 232, 0.92);
+  --scroll-track: rgba(95, 113, 136, 0.11);
+  --scroll-thumb: rgba(95, 113, 136, 0.6);
+  --selection-bg: rgba(95, 113, 136, 0.23);
+  --selection-ink: #20242a;
+  --button-bg: #f8f9f6;
+  --button-bg-hover: #ffffff;
+  --button-border: #c4c8c8;
+  --button-active-bg: color-mix(in srgb, #ffffff 78%, var(--accent) 13%);
+  --button-primary-bg: color-mix(in srgb, #ffffff 84%, var(--accent) 8%);
+  --button-primary-bg-hover: color-mix(in srgb, #ffffff 72%, var(--accent) 16%);
+  --button-primary-border: color-mix(in srgb, var(--accent) 40%, #c4c8c8);
+  --button-primary-ink: #43556c;
+  --drop-bg: color-mix(in srgb, #ffffff 82%, var(--accent) 7%);
+  --drop-bg-hover: color-mix(in srgb, #ffffff 70%, var(--accent) 15%);
+  --drop-border: color-mix(in srgb, var(--accent) 44%, #c4c8c8);
+  --empty-bg: rgba(248, 249, 246, 0.72);
+  --empty-border: #bcc0c0;
+  --empty-ink: #666c72;
+  color-scheme: light;
+}
+
+.theme-cyanotype {
+  --ink: #102935;
+  --muted: #5a7179;
+  --line: #c3d6db;
+  --paper: #f7fbf8;
+  --paper-strong: #ffffff;
+  --accent: #2d7891;
+  --teal: #347f82;
+  --blue: #2d7891;
+  --shell-bg: #e8f1f2;
+  --panel-bg: rgba(244, 250, 250, 0.92);
+  --toolbar-bg: rgba(224, 237, 240, 0.92);
+  --scroll-track: rgba(45, 120, 145, 0.11);
+  --scroll-thumb: rgba(45, 120, 145, 0.62);
+  --selection-bg: rgba(45, 120, 145, 0.24);
+  --selection-ink: #102935;
+  --button-bg: #f5fbfb;
+  --button-bg-hover: #ffffff;
+  --button-border: #bdd2d7;
+  --button-active-bg: color-mix(in srgb, #ffffff 78%, var(--accent) 13%);
+  --button-primary-bg: color-mix(in srgb, #ffffff 84%, var(--accent) 8%);
+  --button-primary-bg-hover: color-mix(in srgb, #ffffff 72%, var(--accent) 16%);
+  --button-primary-border: color-mix(in srgb, var(--accent) 40%, #bdd2d7);
+  --button-primary-ink: #1d596e;
+  --drop-bg: color-mix(in srgb, #ffffff 82%, var(--accent) 7%);
+  --drop-bg-hover: color-mix(in srgb, #ffffff 70%, var(--accent) 15%);
+  --drop-border: color-mix(in srgb, var(--accent) 44%, #bdd2d7);
+  --empty-bg: rgba(245, 251, 251, 0.72);
+  --empty-border: #b6cbd1;
+  --empty-ink: #57727a;
+  color-scheme: light;
+}
+
+.theme-safelight {
+  --ink: #f3d8c4;
+  --muted: #c49d88;
+  --line: #50362f;
+  --paper: #1c1110;
+  --paper-strong: #2a1714;
+  --accent: #f0664d;
+  --teal: #9aa488;
+  --blue: #9ca6c6;
+  --shell-bg: #120d0b;
+  --panel-bg: rgba(28, 16, 14, 0.95);
+  --toolbar-bg: rgba(20, 12, 10, 0.95);
+  --scroll-track: rgba(243, 216, 196, 0.08);
+  --scroll-thumb: rgba(240, 102, 77, 0.7);
+  --selection-bg: rgba(240, 102, 77, 0.32);
+  --selection-ink: #ffe5d4;
+  --button-bg: #211311;
+  --button-bg-hover: #301a16;
+  --button-border: #5b3c32;
+  --button-ink: #ffe0ca;
+  --button-active-bg: color-mix(in srgb, #211311 68%, var(--accent) 22%);
+  --button-primary-bg: #341914;
+  --button-primary-bg-hover: #442119;
+  --button-primary-border: #80483a;
+  --button-primary-ink: #ffd6c9;
+  --drop-bg: color-mix(in srgb, #211311 84%, var(--accent) 9%);
+  --drop-bg-hover: color-mix(in srgb, #301a16 70%, var(--accent) 18%);
+  --drop-border: color-mix(in srgb, var(--accent) 46%, #50362f);
+  --empty-bg: rgba(42, 23, 20, 0.8);
+  --empty-border: #75483b;
+  --empty-ink: #eccab5;
+  color-scheme: dark;
+}
+
+.theme-coldglitch {
+  --ink: #101820;
+  --muted: #526d7c;
+  --line: #9ed9ff;
+  --paper: #f6fbff;
+  --paper-strong: #ffffff;
+  --accent: #00a6ff;
+  --teal: #00d8c8;
+  --blue: #396cff;
+  --shell-bg: #eef8ff;
+  --panel-bg: rgba(244, 251, 255, 0.9);
+  --toolbar-bg: rgba(229, 244, 255, 0.92);
+  --scroll-track: rgba(0, 166, 255, 0.12);
+  --scroll-thumb: rgba(0, 166, 255, 0.7);
+  --selection-bg: rgba(0, 166, 255, 0.28);
+  --selection-ink: #101820;
+  --button-bg: #f6fbff;
+  --button-bg-hover: #ffffff;
+  --button-border: #93d4ff;
+  --button-active-bg: color-mix(in srgb, #ffffff 72%, var(--accent) 18%);
+  --button-primary-bg: color-mix(in srgb, #ffffff 76%, var(--accent) 14%);
+  --button-primary-bg-hover: color-mix(in srgb, #ffffff 64%, var(--accent) 24%);
+  --button-primary-border: #39bbff;
+  --button-primary-ink: #005f96;
+  --drop-bg: color-mix(in srgb, #ffffff 80%, var(--accent) 9%);
+  --drop-bg-hover: color-mix(in srgb, #ffffff 68%, var(--accent) 18%);
+  --drop-border: #5cc7ff;
+  --empty-bg: rgba(246, 251, 255, 0.7);
+  --empty-border: #8dd3ff;
+  --empty-ink: #4e6877;
+  --shadow: 12px 12px 0 rgba(0, 166, 255, 0.16);
+  color-scheme: light;
+}
+
+.theme-hotpink {
+  --ink: #1d1118;
+  --muted: #78576a;
+  --line: #ff9bc8;
+  --paper: #fff7fb;
+  --paper-strong: #ffffff;
+  --accent: #ff2f88;
+  --teal: #00b9b0;
+  --blue: #4b5cff;
+  --shell-bg: #fff0f7;
+  --panel-bg: rgba(255, 246, 251, 0.9);
+  --toolbar-bg: rgba(255, 232, 244, 0.92);
+  --scroll-track: rgba(255, 47, 136, 0.12);
+  --scroll-thumb: rgba(255, 47, 136, 0.72);
+  --selection-bg: rgba(255, 47, 136, 0.28);
+  --selection-ink: #1d1118;
+  --button-bg: #fff7fb;
+  --button-bg-hover: #ffffff;
+  --button-border: #ff9bc8;
+  --button-active-bg: color-mix(in srgb, #ffffff 72%, var(--accent) 18%);
+  --button-primary-bg: color-mix(in srgb, #ffffff 74%, var(--accent) 16%);
+  --button-primary-bg-hover: color-mix(in srgb, #ffffff 62%, var(--accent) 25%);
+  --button-primary-border: #ff5da4;
+  --button-primary-ink: #a41155;
+  --drop-bg: color-mix(in srgb, #ffffff 80%, var(--accent) 9%);
+  --drop-bg-hover: color-mix(in srgb, #ffffff 68%, var(--accent) 18%);
+  --drop-border: #ff70b0;
+  --empty-bg: rgba(255, 247, 251, 0.72);
+  --empty-border: #ff9bc8;
+  --empty-ink: #765367;
+  --shadow: 12px 12px 0 rgba(255, 47, 136, 0.18);
+  color-scheme: light;
+}
+
+.theme-limeghost {
+  --ink: #102116;
+  --muted: #52705a;
+  --line: #9ddf9b;
+  --paper: #f8fff5;
+  --paper-strong: #ffffff;
+  --accent: #39d353;
+  --teal: #00bda5;
+  --blue: #3159d9;
+  --shell-bg: #edf9e8;
+  --panel-bg: rgba(247, 255, 243, 0.9);
+  --toolbar-bg: rgba(228, 247, 222, 0.92);
+  --scroll-track: rgba(57, 211, 83, 0.12);
+  --scroll-thumb: rgba(57, 211, 83, 0.68);
+  --selection-bg: rgba(57, 211, 83, 0.25);
+  --selection-ink: #102116;
+  --button-bg: #f8fff5;
+  --button-bg-hover: #ffffff;
+  --button-border: #9bd99b;
+  --button-active-bg: color-mix(in srgb, #ffffff 72%, var(--accent) 18%);
+  --button-primary-bg: color-mix(in srgb, #ffffff 76%, var(--accent) 14%);
+  --button-primary-bg-hover: color-mix(in srgb, #ffffff 64%, var(--accent) 24%);
+  --button-primary-border: #55ca68;
+  --button-primary-ink: #237b34;
+  --drop-bg: color-mix(in srgb, #ffffff 80%, var(--accent) 9%);
+  --drop-bg-hover: color-mix(in srgb, #ffffff 68%, var(--accent) 18%);
+  --drop-border: #68cf75;
+  --empty-bg: rgba(248, 255, 245, 0.72);
+  --empty-border: #9bd99b;
+  --empty-ink: #506d58;
+  --shadow: 12px 12px 0 rgba(57, 211, 83, 0.16);
+  color-scheme: light;
+}
+
+.theme-blackout {
+  --ink: #f2f7ff;
+  --muted: #9fb1c7;
+  --line: #32244c;
+  --paper: #090b12;
+  --paper-strong: #111522;
+  --accent: #ff3df2;
+  --teal: #19f0ff;
+  --blue: #5d7cff;
+  --shell-bg: #07080d;
+  --panel-bg: rgba(8, 11, 18, 0.95);
+  --toolbar-bg: rgba(7, 8, 13, 0.96);
+  --scroll-track: rgba(242, 247, 255, 0.08);
+  --scroll-thumb: rgba(255, 61, 242, 0.72);
+  --selection-bg: rgba(255, 61, 242, 0.32);
+  --selection-ink: #fff4ff;
+  --button-bg: #0c0f19;
+  --button-bg-hover: #171b2a;
+  --button-border: #3b2d5c;
+  --button-ink: #f5f8ff;
+  --button-active-bg: color-mix(in srgb, #0c0f19 66%, var(--accent) 24%);
+  --button-primary-bg: #1c1228;
+  --button-primary-bg-hover: #2a1739;
+  --button-primary-border: #8733a1;
+  --button-primary-ink: #ffd7fb;
+  --drop-bg: color-mix(in srgb, #0c0f19 82%, var(--accent) 10%);
+  --drop-bg-hover: color-mix(in srgb, #171b2a 68%, var(--accent) 20%);
+  --drop-border: #5c3484;
+  --empty-bg: rgba(17, 21, 34, 0.78);
+  --empty-border: #4e3a72;
+  --empty-ink: #c4d0e3;
+  --shadow: 12px 12px 0 rgba(255, 61, 242, 0.18);
+  color-scheme: dark;
+}
+
+.theme-editorialwhite {
+  --ink: #111111;
+  --muted: #5d5a54;
+  --line: #111111;
+  --paper: #fffdf2;
+  --paper-strong: #ffffff;
+  --accent: #f03a2f;
+  --teal: #008d7c;
+  --blue: #1d49d8;
+  --shell-bg: #f7f4ea;
+  --panel-bg: rgba(255, 253, 242, 0.92);
+  --toolbar-bg: rgba(240, 236, 224, 0.92);
+  --scroll-track: rgba(17, 17, 17, 0.12);
+  --scroll-thumb: rgba(240, 58, 47, 0.72);
+  --selection-bg: rgba(240, 58, 47, 0.28);
+  --selection-ink: #111111;
+  --button-bg: #fffdf2;
+  --button-bg-hover: #ffffff;
+  --button-border: #111111;
+  --button-active-bg: color-mix(in srgb, #fffdf2 68%, var(--accent) 18%);
+  --button-primary-bg: #f03a2f;
+  --button-primary-bg-hover: #ff4d42;
+  --button-primary-border: #111111;
+  --button-primary-ink: #111111;
+  --drop-bg: #fffdf2;
+  --drop-bg-hover: color-mix(in srgb, #fffdf2 70%, var(--accent) 18%);
+  --drop-border: #111111;
+  --empty-bg: rgba(255, 253, 242, 0.74);
+  --empty-border: #111111;
+  --empty-ink: #111111;
+  --shadow: 10px 10px 0 rgba(17, 17, 17, 0.2);
+  color-scheme: light;
+}
+
+.theme-proofred {
+  --ink: #17100d;
+  --muted: #6f5a51;
+  --line: #19110e;
+  --paper: #fff9f3;
+  --paper-strong: #ffffff;
+  --accent: #e60023;
+  --teal: #007f77;
+  --blue: #243f9f;
+  --shell-bg: #fff7f1;
+  --panel-bg: rgba(255, 249, 243, 0.92);
+  --toolbar-bg: rgba(250, 235, 226, 0.92);
+  --scroll-track: rgba(230, 0, 35, 0.12);
+  --scroll-thumb: rgba(230, 0, 35, 0.72);
+  --selection-bg: rgba(230, 0, 35, 0.28);
+  --selection-ink: #17100d;
+  --button-bg: #fff9f3;
+  --button-bg-hover: #ffffff;
+  --button-border: #19110e;
+  --button-active-bg: color-mix(in srgb, #fff9f3 68%, var(--accent) 18%);
+  --button-primary-bg: #e60023;
+  --button-primary-bg-hover: #ff1636;
+  --button-primary-border: #19110e;
+  --button-primary-ink: #17100d;
+  --drop-bg: #fff9f3;
+  --drop-bg-hover: color-mix(in srgb, #fff9f3 70%, var(--accent) 18%);
+  --drop-border: #19110e;
+  --empty-bg: rgba(255, 249, 243, 0.74);
+  --empty-border: #19110e;
+  --empty-ink: #17100d;
+  --shadow: 10px 10px 0 rgba(230, 0, 35, 0.18);
+  color-scheme: light;
+}
+
+.theme-fluoropage {
+  --ink: #121212;
+  --muted: #525a33;
+  --line: #121212;
+  --paper: #ffffec;
+  --paper-strong: #ffffff;
+  --accent: #b6ff00;
+  --teal: #00a884;
+  --blue: #234ee8;
+  --shell-bg: #fbffe1;
+  --panel-bg: rgba(255, 255, 236, 0.92);
+  --toolbar-bg: rgba(242, 250, 205, 0.92);
+  --scroll-track: rgba(18, 18, 18, 0.12);
+  --scroll-thumb: rgba(114, 162, 0, 0.72);
+  --selection-bg: rgba(182, 255, 0, 0.34);
+  --selection-ink: #121212;
+  --button-bg: #ffffec;
+  --button-bg-hover: #ffffff;
+  --button-border: #121212;
+  --button-active-bg: color-mix(in srgb, #ffffec 64%, var(--accent) 26%);
+  --button-primary-bg: #b6ff00;
+  --button-primary-bg-hover: #c8ff34;
+  --button-primary-border: #121212;
+  --button-primary-ink: #121212;
+  --drop-bg: #ffffec;
+  --drop-bg-hover: color-mix(in srgb, #ffffec 62%, var(--accent) 28%);
+  --drop-border: #121212;
+  --empty-bg: rgba(255, 255, 236, 0.74);
+  --empty-border: #121212;
+  --empty-ink: #121212;
+  --shadow: 10px 10px 0 rgba(182, 255, 0, 0.26);
+  color-scheme: light;
+}
+
+.theme-midnightissue {
+  --ink: #f5f1df;
+  --muted: #c5bc91;
+  --line: #393522;
+  --paper: #0b0b0c;
+  --paper-strong: #171611;
+  --accent: #f6d93b;
+  --teal: #25d8c2;
+  --blue: #7396ff;
+  --shell-bg: #0b0b0c;
+  --panel-bg: rgba(12, 12, 12, 0.95);
+  --toolbar-bg: rgba(8, 8, 9, 0.96);
+  --scroll-track: rgba(245, 241, 223, 0.08);
+  --scroll-thumb: rgba(246, 217, 59, 0.74);
+  --selection-bg: rgba(246, 217, 59, 0.32);
+  --selection-ink: #fff9cf;
+  --button-bg: #111111;
+  --button-bg-hover: #1d1c16;
+  --button-border: #4c4524;
+  --button-ink: #fbf3ce;
+  --button-active-bg: color-mix(in srgb, #111111 64%, var(--accent) 24%);
+  --button-primary-bg: #f6d93b;
+  --button-primary-bg-hover: #ffe45a;
+  --button-primary-border: #1b1607;
+  --button-primary-ink: #0b0b0c;
+  --drop-bg: #111111;
+  --drop-bg-hover: color-mix(in srgb, #111111 68%, var(--accent) 18%);
+  --drop-border: #5b5123;
+  --empty-bg: rgba(23, 22, 17, 0.78);
+  --empty-border: #5b5123;
+  --empty-ink: #efe4aa;
+  --shadow: 10px 10px 0 rgba(246, 217, 59, 0.16);
+  color-scheme: dark;
+}
+
+.theme-silveros {
+  --ink: #15212d;
+  --muted: #607184;
+  --line: rgba(93, 124, 255, 0.28);
+  --paper: rgba(255, 255, 255, 0.72);
+  --paper-strong: rgba(255, 255, 255, 0.9);
+  --accent: #5d7cff;
+  --teal: #33c6c2;
+  --blue: #5d7cff;
+  --shell-bg: #edf3f7;
+  --panel-bg: rgba(255, 255, 255, 0.48);
+  --toolbar-bg: rgba(255, 255, 255, 0.58);
+  --scroll-track: rgba(21, 33, 45, 0.08);
+  --scroll-thumb: rgba(93, 124, 255, 0.58);
+  --selection-bg: rgba(93, 124, 255, 0.24);
+  --selection-ink: #15212d;
+  --button-bg: rgba(255, 255, 255, 0.58);
+  --button-bg-hover: rgba(255, 255, 255, 0.86);
+  --button-border: rgba(93, 124, 255, 0.32);
+  --button-active-bg: rgba(255, 255, 255, 0.72);
+  --button-primary-bg: rgba(93, 124, 255, 0.22);
+  --button-primary-bg-hover: rgba(93, 124, 255, 0.34);
+  --button-primary-border: rgba(93, 124, 255, 0.5);
+  --button-primary-ink: #334fd4;
+  --drop-bg: rgba(255, 255, 255, 0.8);
+  --drop-bg-hover: rgba(255, 255, 255, 0.92);
+  --drop-border: rgba(93, 124, 255, 0.38);
+  --empty-bg: rgba(255, 255, 255, 0.46);
+  --empty-border: rgba(93, 124, 255, 0.28);
+  --empty-ink: #5b6e82;
+  --shadow: 0 24px 80px rgba(58, 83, 148, 0.18);
+  color-scheme: light;
+}
+
+.theme-icehud {
+  --ink: #0f2835;
+  --muted: #577887;
+  --line: rgba(0, 188, 212, 0.28);
+  --paper: rgba(255, 255, 255, 0.72);
+  --paper-strong: rgba(255, 255, 255, 0.92);
+  --accent: #00bcd4;
+  --teal: #00bcd4;
+  --blue: #4d86ff;
+  --shell-bg: #f5fbff;
+  --panel-bg: rgba(255, 255, 255, 0.5);
+  --toolbar-bg: rgba(255, 255, 255, 0.62);
+  --scroll-track: rgba(15, 40, 53, 0.08);
+  --scroll-thumb: rgba(0, 188, 212, 0.58);
+  --selection-bg: rgba(0, 188, 212, 0.23);
+  --selection-ink: #0f2835;
+  --button-bg: rgba(255, 255, 255, 0.6);
+  --button-bg-hover: rgba(255, 255, 255, 0.88);
+  --button-border: rgba(0, 188, 212, 0.32);
+  --button-active-bg: rgba(255, 255, 255, 0.74);
+  --button-primary-bg: rgba(0, 188, 212, 0.22);
+  --button-primary-bg-hover: rgba(0, 188, 212, 0.34);
+  --button-primary-border: rgba(0, 188, 212, 0.5);
+  --button-primary-ink: #007e91;
+  --drop-bg: rgba(255, 255, 255, 0.82);
+  --drop-bg-hover: rgba(255, 255, 255, 0.94);
+  --drop-border: rgba(0, 188, 212, 0.38);
+  --empty-bg: rgba(255, 255, 255, 0.48);
+  --empty-border: rgba(0, 188, 212, 0.28);
+  --empty-ink: #557482;
+  --shadow: 0 24px 78px rgba(35, 120, 150, 0.16);
+  color-scheme: light;
+}
+
+.theme-ambertask {
+  --ink: #20232b;
+  --muted: #706b61;
+  --line: rgba(255, 138, 0, 0.28);
+  --paper: rgba(255, 252, 244, 0.74);
+  --paper-strong: rgba(255, 255, 255, 0.92);
+  --accent: #ff8a00;
+  --teal: #2aa394;
+  --blue: #526edc;
+  --shell-bg: #f7f4ec;
+  --panel-bg: rgba(255, 252, 244, 0.56);
+  --toolbar-bg: rgba(255, 250, 240, 0.64);
+  --scroll-track: rgba(32, 35, 43, 0.08);
+  --scroll-thumb: rgba(255, 138, 0, 0.6);
+  --selection-bg: rgba(255, 138, 0, 0.24);
+  --selection-ink: #20232b;
+  --button-bg: rgba(255, 252, 244, 0.62);
+  --button-bg-hover: rgba(255, 255, 255, 0.9);
+  --button-border: rgba(255, 138, 0, 0.34);
+  --button-active-bg: rgba(255, 255, 255, 0.74);
+  --button-primary-bg: rgba(255, 138, 0, 0.23);
+  --button-primary-bg-hover: rgba(255, 138, 0, 0.34);
+  --button-primary-border: rgba(255, 138, 0, 0.5);
+  --button-primary-ink: #a95800;
+  --drop-bg: rgba(255, 252, 244, 0.84);
+  --drop-bg-hover: rgba(255, 255, 255, 0.94);
+  --drop-border: rgba(255, 138, 0, 0.38);
+  --empty-bg: rgba(255, 252, 244, 0.48);
+  --empty-border: rgba(255, 138, 0, 0.28);
+  --empty-ink: #6d685e;
+  --shadow: 0 24px 78px rgba(147, 92, 18, 0.16);
+  color-scheme: light;
+}
+
+.theme-darkhud {
+  --ink: #e9f6ff;
+  --muted: #98b4c9;
+  --line: rgba(54, 215, 255, 0.24);
+  --paper: rgba(10, 22, 35, 0.72);
+  --paper-strong: rgba(17, 35, 54, 0.86);
+  --accent: #36d7ff;
+  --teal: #48f0d5;
+  --blue: #7fa2ff;
+  --shell-bg: #07121e;
+  --panel-bg: rgba(9, 20, 32, 0.56);
+  --toolbar-bg: rgba(7, 18, 30, 0.72);
+  --scroll-track: rgba(233, 246, 255, 0.08);
+  --scroll-thumb: rgba(54, 215, 255, 0.64);
+  --selection-bg: rgba(54, 215, 255, 0.3);
+  --selection-ink: #f4fbff;
+  --button-bg: rgba(17, 35, 54, 0.62);
+  --button-bg-hover: rgba(25, 49, 74, 0.82);
+  --button-border: rgba(54, 215, 255, 0.28);
+  --button-ink: #effaff;
+  --button-active-bg: rgba(54, 215, 255, 0.2);
+  --button-primary-bg: rgba(54, 215, 255, 0.25);
+  --button-primary-bg-hover: rgba(54, 215, 255, 0.36);
+  --button-primary-border: rgba(54, 215, 255, 0.5);
+  --button-primary-ink: #c9f6ff;
+  --drop-bg: rgba(17, 35, 54, 0.84);
+  --drop-bg-hover: rgba(25, 49, 74, 0.92);
+  --drop-border: rgba(54, 215, 255, 0.3);
+  --empty-bg: rgba(17, 35, 54, 0.48);
+  --empty-border: rgba(54, 215, 255, 0.24);
+  --empty-ink: #b6d0e2;
+  --shadow: 0 28px 88px rgba(0, 5, 14, 0.36);
+  color-scheme: dark;
+}
+
 .app-shell[class*="theme-"] {
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--ink) 5%, transparent) 1px, transparent 1px),
@@ -1332,6 +2279,495 @@ button:disabled {
 .series-glass .modal-actions button,
 .series-glass .shortcut-capture {
   border-radius: 999px;
+}
+
+.series-flight.app-shell {
+  background:
+    repeating-radial-gradient(
+      circle at 82% 12%,
+      transparent 0 34px,
+      color-mix(in srgb, var(--accent) 12%, transparent) 35px 36px,
+      transparent 37px 70px
+    ),
+    linear-gradient(115deg, transparent 0 54%, color-mix(in srgb, var(--blue) 10%, transparent) 54% 55%, transparent 56%),
+    linear-gradient(168deg, transparent 0 38%, color-mix(in srgb, var(--accent) 12%, transparent) 38% 39%, transparent 40%),
+    radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--teal) 14%, transparent), transparent 28%),
+    var(--shell-bg);
+  background-size: auto;
+}
+
+.series-flight .desktop-titlebar,
+.series-flight .reader-toolbar,
+.series-flight .reader-bookbar,
+.series-flight .pane-header {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--line));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 12%, transparent), transparent 42%),
+    color-mix(in srgb, var(--toolbar-bg) 90%, var(--paper-strong));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--paper-strong) 42%, transparent) inset,
+    0 6px 20px color-mix(in srgb, var(--blue) 8%, transparent);
+}
+
+.series-flight .book-card,
+.series-flight .note-card,
+.series-flight .annotation-card,
+.series-flight .annotation-modal,
+.series-flight .settings-panel,
+.series-flight .context-menu,
+.series-flight .selection-menu,
+.series-flight .markdown-body {
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--line));
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(180deg, color-mix(in srgb, var(--blue) 4%, transparent) 1px, transparent 1px),
+    var(--paper);
+  background-size: 22px 22px, 22px 22px, auto;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--paper-strong) 36%, transparent) inset,
+    0 18px 48px color-mix(in srgb, var(--blue) 14%, transparent);
+}
+
+.series-flight .reader-left,
+.series-flight .reader-right,
+.series-flight .reader-search-panel,
+.series-flight .export-panel,
+.series-flight .draft-panel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 42%),
+    var(--panel-bg);
+}
+
+.series-flight .eyebrow,
+.series-flight .pane-header,
+.series-flight .reader-search-result strong {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  letter-spacing: 0.08em;
+}
+
+.series-flight .book-entry::before {
+  width: 5px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, var(--accent), var(--teal) 54%, var(--blue));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.series-study.app-shell {
+  background:
+    linear-gradient(105deg, transparent 0 18%, color-mix(in srgb, var(--teal) 9%, transparent) 18% 19%, transparent 20%),
+    linear-gradient(78deg, transparent 0 72%, color-mix(in srgb, var(--accent) 9%, transparent) 72% 73%, transparent 74%),
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--ink) 3%, transparent) 0 1px,
+      transparent 1px 26px
+    ),
+    radial-gradient(circle at 12% 14%, color-mix(in srgb, var(--teal) 10%, transparent), transparent 28%),
+    var(--shell-bg);
+  background-size: auto;
+}
+
+.series-study .desktop-titlebar,
+.series-study .reader-toolbar,
+.series-study .reader-bookbar,
+.series-study .pane-header {
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--paper-strong) 46%, transparent), transparent),
+    color-mix(in srgb, var(--toolbar-bg) 90%, var(--paper));
+}
+
+.series-study .home-header h1,
+.series-study .theme-skin-heading strong,
+.series-study .pane-header,
+.series-study .book-card-title {
+  font-family: "Noto Serif SC", "Source Han Serif SC", SimSun, serif;
+  font-weight: 760;
+}
+
+.series-study .book-card,
+.series-study .note-card,
+.series-study .annotation-card,
+.series-study .annotation-modal,
+.series-study .settings-panel,
+.series-study .context-menu,
+.series-study .selection-menu,
+.series-study .markdown-body {
+  border-color: color-mix(in srgb, var(--accent) 18%, var(--line));
+  border-radius: 5px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ink) 2.5%, transparent) 0 1px,
+      transparent 1px 21px
+    ),
+    linear-gradient(145deg, color-mix(in srgb, var(--paper-strong) 44%, transparent), transparent 44%),
+    var(--paper);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--paper-strong) 66%, transparent) inset,
+    0 20px 45px color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.series-study .reader-left,
+.series-study .reader-right,
+.series-study .reader-search-panel,
+.series-study .export-panel,
+.series-study .draft-panel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--paper-strong) 34%, transparent), transparent),
+    var(--panel-bg);
+}
+
+.series-study .book-entry::before {
+  width: 8px;
+  border-radius: 0 999px 999px 0;
+  background:
+    linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--teal) 78%, var(--accent)));
+}
+
+.series-darkroom.app-shell {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ink) 8%, transparent) 0 10px,
+      transparent 10px 42px
+    ),
+    radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 28%),
+    radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--blue) 12%, transparent), transparent 26%),
+    linear-gradient(145deg, color-mix(in srgb, var(--paper-strong) 16%, transparent), transparent 46%),
+    var(--shell-bg);
+  background-size: auto;
+}
+
+.series-darkroom .desktop-titlebar,
+.series-darkroom .reader-toolbar,
+.series-darkroom .reader-bookbar,
+.series-darkroom .pane-header {
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--line));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 15%, transparent), transparent 38%),
+    color-mix(in srgb, var(--toolbar-bg) 90%, var(--paper-strong));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--paper-strong) 42%, transparent) inset;
+}
+
+.series-darkroom .book-card,
+.series-darkroom .note-card,
+.series-darkroom .annotation-card,
+.series-darkroom .annotation-modal,
+.series-darkroom .settings-panel,
+.series-darkroom .context-menu,
+.series-darkroom .selection-menu,
+.series-darkroom .markdown-body {
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--line));
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--ink) 5%, transparent) 0 1px, transparent 1.5px),
+    linear-gradient(180deg, color-mix(in srgb, var(--paper-strong) 36%, transparent), transparent 48%),
+    var(--paper);
+  background-size: 14px 14px, auto, auto;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--paper-strong) 58%, transparent) inset,
+    0 22px 56px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.series-darkroom .reader-left,
+.series-darkroom .reader-right,
+.series-darkroom .reader-search-panel,
+.series-darkroom .export-panel,
+.series-darkroom .draft-panel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 6%, transparent), transparent 42%),
+    var(--panel-bg);
+}
+
+.series-darkroom .book-entry::before {
+  width: 12px;
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      var(--accent) 0 8px,
+      color-mix(in srgb, var(--paper-strong) 60%, transparent) 8px 13px
+    );
+  opacity: 0.92;
+}
+
+.series-glitch.app-shell {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 18%, transparent) 0 2px, transparent 2px 100%),
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--ink) 6%, transparent) 0 1px,
+      transparent 1px 7px
+    ),
+    linear-gradient(112deg, transparent 0 19%, color-mix(in srgb, var(--teal) 16%, transparent) 19% 25%, transparent 25%),
+    linear-gradient(72deg, transparent 0 68%, color-mix(in srgb, var(--accent) 18%, transparent) 68% 76%, transparent 76%),
+    var(--shell-bg);
+  background-size: 54px 100%, auto, auto, auto, auto;
+}
+
+.series-glitch .desktop-titlebar,
+.series-glitch .reader-toolbar,
+.series-glitch .reader-bookbar,
+.series-glitch .pane-header {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 24%, transparent) 0 18%, transparent 18%),
+    linear-gradient(270deg, color-mix(in srgb, var(--teal) 18%, transparent), transparent 42%),
+    color-mix(in srgb, var(--toolbar-bg) 88%, var(--paper-strong));
+  box-shadow:
+    3px 0 0 color-mix(in srgb, var(--teal) 44%, transparent),
+    -3px 0 0 color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.series-glitch .book-card,
+.series-glitch .note-card,
+.series-glitch .annotation-card,
+.series-glitch .annotation-modal,
+.series-glitch .settings-panel,
+.series-glitch .context-menu,
+.series-glitch .selection-menu,
+.series-glitch .markdown-body {
+  border: 1px solid color-mix(in srgb, var(--accent) 58%, var(--line));
+  border-radius: 3px;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--ink) 3%, transparent) 0 1px,
+      transparent 1px 9px
+    ),
+    linear-gradient(135deg, color-mix(in srgb, var(--teal) 9%, transparent) 0 14%, transparent 14%),
+    var(--paper);
+  box-shadow:
+    6px 0 0 color-mix(in srgb, var(--teal) 18%, transparent),
+    -6px 0 0 color-mix(in srgb, var(--accent) 14%, transparent),
+    var(--shadow);
+}
+
+.series-glitch .reader-left,
+.series-glitch .reader-right,
+.series-glitch .reader-search-panel,
+.series-glitch .export-panel,
+.series-glitch .draft-panel {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--ink) 3%, transparent) 0 1px,
+      transparent 1px 8px
+    ),
+    var(--panel-bg);
+}
+
+.series-glitch .book-card:hover,
+.series-glitch .note-card:hover,
+.series-glitch .annotation-card:hover {
+  box-shadow:
+    8px 0 0 color-mix(in srgb, var(--teal) 26%, transparent),
+    -8px 0 0 color-mix(in srgb, var(--accent) 22%, transparent),
+    var(--shadow);
+}
+
+.series-glitch .eyebrow,
+.series-glitch .pane-header,
+.series-glitch .titlebar-copy strong,
+.series-glitch .reader-search-result strong {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  letter-spacing: 0.12em;
+}
+
+.series-glitch .book-entry::before {
+  width: 4px;
+  border-radius: 0;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      var(--accent) 0 6px,
+      var(--teal) 6px 12px,
+      var(--blue) 12px 18px
+    );
+  box-shadow:
+    5px 0 0 color-mix(in srgb, var(--teal) 22%, transparent),
+    -4px 0 0 color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.series-deconstruct.app-shell {
+  background:
+    linear-gradient(124deg, transparent 0 22%, color-mix(in srgb, var(--ink) 12%, transparent) 22% 23%, transparent 23%),
+    linear-gradient(61deg, transparent 0 55%, color-mix(in srgb, var(--accent) 24%, transparent) 55% 64%, transparent 64%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 84px,
+      color-mix(in srgb, var(--ink) 8%, transparent) 84px 88px
+    ),
+    var(--shell-bg);
+  background-size: auto;
+}
+
+.series-deconstruct .desktop-titlebar,
+.series-deconstruct .reader-toolbar,
+.series-deconstruct .reader-bookbar,
+.series-deconstruct .pane-header {
+  border-color: var(--line);
+  background:
+    linear-gradient(90deg, var(--accent) 0 8px, transparent 8px 100%),
+    color-mix(in srgb, var(--toolbar-bg) 88%, var(--paper-strong));
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--ink) 16%, transparent);
+}
+
+.series-deconstruct .home-header h1 {
+  display: inline-block;
+  padding: 3px 12px;
+  background: var(--paper-strong);
+  box-shadow: 10px 10px 0 color-mix(in srgb, var(--accent) 46%, transparent);
+  transform: skew(-4deg);
+}
+
+.series-deconstruct .home-subtitle {
+  border-left: 10px solid var(--accent);
+  background: color-mix(in srgb, var(--paper-strong) 74%, transparent);
+  padding: 10px 14px;
+}
+
+.series-deconstruct .book-card,
+.series-deconstruct .note-card,
+.series-deconstruct .annotation-card,
+.series-deconstruct .annotation-modal,
+.series-deconstruct .settings-panel,
+.series-deconstruct .context-menu,
+.series-deconstruct .selection-menu,
+.series-deconstruct .markdown-body {
+  border: 2px solid var(--line);
+  border-radius: 0;
+  background:
+    linear-gradient(110deg, color-mix(in srgb, var(--accent) 18%, transparent) 0 10%, transparent 10%),
+    linear-gradient(180deg, transparent 0 calc(100% - 5px), color-mix(in srgb, var(--ink) 12%, transparent) calc(100% - 5px)),
+    var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.series-deconstruct .reader-left,
+.series-deconstruct .reader-right,
+.series-deconstruct .reader-search-panel,
+.series-deconstruct .export-panel,
+.series-deconstruct .draft-panel {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent) 0 18%, transparent 18%),
+    var(--panel-bg);
+}
+
+.series-deconstruct .theme-choice,
+.series-deconstruct .series-choice,
+.series-deconstruct .icon-button,
+.series-deconstruct .primary-button,
+.series-deconstruct .pane-action,
+.series-deconstruct .workbench-actions button,
+.series-deconstruct .modal-actions button,
+.series-deconstruct .shortcut-capture {
+  border-radius: 0;
+}
+
+.series-deconstruct .eyebrow,
+.series-deconstruct .pane-header,
+.series-deconstruct .theme-skin-heading strong {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.series-deconstruct .book-entry::before {
+  width: 18px;
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, var(--accent) 0 42%, var(--ink) 42% 58%, var(--blue) 58%);
+}
+
+.series-system.app-shell {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, transparent) 1px, transparent 1px),
+    linear-gradient(180deg, color-mix(in srgb, var(--blue) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(130deg, transparent 0 24%, color-mix(in srgb, var(--paper-strong) 22%, transparent) 24% 38%, transparent 38%),
+    linear-gradient(42deg, transparent 0 62%, color-mix(in srgb, var(--teal) 14%, transparent) 62% 74%, transparent 74%),
+    var(--shell-bg);
+  background-attachment: fixed;
+  background-size: 48px 48px, 48px 48px, auto, auto, auto;
+}
+
+.series-system .desktop-titlebar,
+.series-system .reader-toolbar,
+.series-system .reader-bookbar,
+.series-system .pane-header {
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--paper-strong) 42%, transparent), transparent),
+    var(--toolbar-bg);
+  backdrop-filter: blur(20px) saturate(1.24);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--paper-strong) 52%, transparent) inset,
+    0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.series-system .reader-left,
+.series-system .reader-right,
+.series-system .reader-search-panel,
+.series-system .export-panel,
+.series-system .draft-panel {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--paper-strong) 22%, transparent), transparent),
+    var(--panel-bg);
+  backdrop-filter: blur(24px) saturate(1.2);
+}
+
+.series-system .book-card,
+.series-system .note-card,
+.series-system .annotation-card,
+.series-system .annotation-modal,
+.series-system .settings-panel,
+.series-system .context-menu,
+.series-system .selection-menu,
+.series-system .markdown-body {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 10%, transparent) 0 1px, transparent 1px),
+    linear-gradient(180deg, color-mix(in srgb, var(--blue) 8%, transparent) 0 1px, transparent 1px),
+    linear-gradient(145deg, color-mix(in srgb, var(--paper-strong) 34%, transparent), transparent 42%),
+    var(--paper);
+  background-size: 26px 26px, 26px 26px, auto, auto;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(24px) saturate(1.18);
+}
+
+.series-system .book-card,
+.series-system .note-card,
+.series-system .annotation-modal,
+.series-system .settings-panel,
+.series-system .markdown-body {
+  border-radius: 10px;
+}
+
+.series-system .theme-choice,
+.series-system .series-choice,
+.series-system .icon-button,
+.series-system .primary-button,
+.series-system .pane-action,
+.series-system .workbench-actions button,
+.series-system .modal-actions button,
+.series-system .shortcut-capture {
+  border-radius: 6px;
+}
+
+.series-system .eyebrow,
+.series-system .pane-header,
+.series-system .titlebar-copy strong,
+.series-system .reader-search-result strong {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  letter-spacing: 0.1em;
+}
+
+.series-system .book-entry::before {
+  width: 6px;
+  background:
+    linear-gradient(180deg, var(--accent), var(--teal) 50%, var(--blue));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 .home-shell {
@@ -2191,6 +3627,7 @@ button:disabled {
 .export-output::-webkit-scrollbar,
 .annotation-modal::-webkit-scrollbar,
 .settings-panel::-webkit-scrollbar,
+.theme-series-list::-webkit-scrollbar,
 .home-shell::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -2205,6 +3642,7 @@ button:disabled {
 .export-output::-webkit-scrollbar-track,
 .annotation-modal::-webkit-scrollbar-track,
 .settings-panel::-webkit-scrollbar-track,
+.theme-series-list::-webkit-scrollbar-track,
 .home-shell::-webkit-scrollbar-track {
   background: var(--scroll-track);
 }
@@ -2218,6 +3656,7 @@ button:disabled {
 .export-output::-webkit-scrollbar-thumb,
 .annotation-modal::-webkit-scrollbar-thumb,
 .settings-panel::-webkit-scrollbar-thumb,
+.theme-series-list::-webkit-scrollbar-thumb,
 .home-shell::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
@@ -3007,7 +4446,7 @@ body.sorting-drag-active * {
 
 .theme-series-list {
   display: flex;
-  max-height: 360px;
+  max-height: min(360px, calc(100vh - 280px));
   flex-direction: column;
   gap: 8px;
   overflow: auto;
@@ -3015,6 +4454,8 @@ body.sorting-drag-active * {
   border-radius: 8px;
   background: color-mix(in srgb, var(--panel-bg) 82%, transparent);
   padding: 8px;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+  scrollbar-width: thin;
 }
 
 .theme-skin-panel {
@@ -4162,6 +5603,34 @@ body.sorting-drag-active * {
 .theme-dusk .modal-actions .danger,
 .theme-dusk .danger-eyebrow,
 .theme-dusk .delete-book-warning svg,
+.theme-smoke .context-menu button.danger,
+.theme-smoke .modal-actions .danger,
+.theme-smoke .danger-eyebrow,
+.theme-smoke .delete-book-warning svg,
+.theme-redcockpit .context-menu button.danger,
+.theme-redcockpit .modal-actions .danger,
+.theme-redcockpit .danger-eyebrow,
+.theme-redcockpit .delete-book-warning svg,
+.theme-inklamp .context-menu button.danger,
+.theme-inklamp .modal-actions .danger,
+.theme-inklamp .danger-eyebrow,
+.theme-inklamp .delete-book-warning svg,
+.theme-safelight .context-menu button.danger,
+.theme-safelight .modal-actions .danger,
+.theme-safelight .danger-eyebrow,
+.theme-safelight .delete-book-warning svg,
+.theme-blackout .context-menu button.danger,
+.theme-blackout .modal-actions .danger,
+.theme-blackout .danger-eyebrow,
+.theme-blackout .delete-book-warning svg,
+.theme-midnightissue .context-menu button.danger,
+.theme-midnightissue .modal-actions .danger,
+.theme-midnightissue .danger-eyebrow,
+.theme-midnightissue .delete-book-warning svg,
+.theme-darkhud .context-menu button.danger,
+.theme-darkhud .modal-actions .danger,
+.theme-darkhud .danger-eyebrow,
+.theme-darkhud .delete-book-warning svg,
 .surface-ink .context-menu button.danger,
 .surface-ink .modal-actions .danger,
 .surface-ink .danger-eyebrow,
@@ -4179,6 +5648,13 @@ body.sorting-drag-active * {
 .theme-aurora .context-menu button.danger:hover,
 .theme-noir .context-menu button.danger:hover,
 .theme-dusk .context-menu button.danger:hover,
+.theme-smoke .context-menu button.danger:hover,
+.theme-redcockpit .context-menu button.danger:hover,
+.theme-inklamp .context-menu button.danger:hover,
+.theme-safelight .context-menu button.danger:hover,
+.theme-blackout .context-menu button.danger:hover,
+.theme-midnightissue .context-menu button.danger:hover,
+.theme-darkhud .context-menu button.danger:hover,
 .surface-ink .context-menu button.danger:hover {
   background: color-mix(in srgb, #ff8d7c 18%, transparent);
   color: #ffd2cc;
@@ -4194,6 +5670,13 @@ body.sorting-drag-active * {
 .theme-aurora .modal-actions .danger,
 .theme-noir .modal-actions .danger,
 .theme-dusk .modal-actions .danger,
+.theme-smoke .modal-actions .danger,
+.theme-redcockpit .modal-actions .danger,
+.theme-inklamp .modal-actions .danger,
+.theme-safelight .modal-actions .danger,
+.theme-blackout .modal-actions .danger,
+.theme-midnightissue .modal-actions .danger,
+.theme-darkhud .modal-actions .danger,
 .surface-ink .modal-actions .danger {
   border-color: color-mix(in srgb, #ff8d7c 50%, var(--line));
   background: color-mix(in srgb, #ff8d7c 10%, var(--paper-strong));
@@ -4209,6 +5692,13 @@ body.sorting-drag-active * {
 .theme-aurora .delete-book-warning,
 .theme-noir .delete-book-warning,
 .theme-dusk .delete-book-warning,
+.theme-smoke .delete-book-warning,
+.theme-redcockpit .delete-book-warning,
+.theme-inklamp .delete-book-warning,
+.theme-safelight .delete-book-warning,
+.theme-blackout .delete-book-warning,
+.theme-midnightissue .delete-book-warning,
+.theme-darkhud .delete-book-warning,
 .surface-ink .delete-book-warning {
   border-color: color-mix(in srgb, #ff8d7c 42%, var(--line));
   background: color-mix(in srgb, #ff8d7c 9%, var(--paper-strong));
@@ -4234,6 +5724,20 @@ body.sorting-drag-active * {
 .theme-noir .annotation-location-list article.located strong,
 .theme-dusk .diff-block.added header,
 .theme-dusk .annotation-location-list article.located strong,
+.theme-smoke .diff-block.added header,
+.theme-smoke .annotation-location-list article.located strong,
+.theme-redcockpit .diff-block.added header,
+.theme-redcockpit .annotation-location-list article.located strong,
+.theme-inklamp .diff-block.added header,
+.theme-inklamp .annotation-location-list article.located strong,
+.theme-safelight .diff-block.added header,
+.theme-safelight .annotation-location-list article.located strong,
+.theme-blackout .diff-block.added header,
+.theme-blackout .annotation-location-list article.located strong,
+.theme-midnightissue .diff-block.added header,
+.theme-midnightissue .annotation-location-list article.located strong,
+.theme-darkhud .diff-block.added header,
+.theme-darkhud .annotation-location-list article.located strong,
 .surface-ink .diff-block.added header,
 .surface-ink .annotation-location-list article.located strong {
   color: #90e3b5;
@@ -4259,6 +5763,20 @@ body.sorting-drag-active * {
 .theme-noir .annotation-location-list article.lost strong,
 .theme-dusk .diff-block.removed header,
 .theme-dusk .annotation-location-list article.lost strong,
+.theme-smoke .diff-block.removed header,
+.theme-smoke .annotation-location-list article.lost strong,
+.theme-redcockpit .diff-block.removed header,
+.theme-redcockpit .annotation-location-list article.lost strong,
+.theme-inklamp .diff-block.removed header,
+.theme-inklamp .annotation-location-list article.lost strong,
+.theme-safelight .diff-block.removed header,
+.theme-safelight .annotation-location-list article.lost strong,
+.theme-blackout .diff-block.removed header,
+.theme-blackout .annotation-location-list article.lost strong,
+.theme-midnightissue .diff-block.removed header,
+.theme-midnightissue .annotation-location-list article.lost strong,
+.theme-darkhud .diff-block.removed header,
+.theme-darkhud .annotation-location-list article.lost strong,
 .surface-ink .diff-block.removed header,
 .surface-ink .annotation-location-list article.lost strong {
   color: #ffb4a8;
@@ -4273,7 +5791,14 @@ body.sorting-drag-active * {
 .theme-amber,
 .theme-aurora,
 .theme-noir,
-.theme-dusk {
+.theme-dusk,
+.theme-smoke,
+.theme-redcockpit,
+.theme-inklamp,
+.theme-safelight,
+.theme-blackout,
+.theme-midnightissue,
+.theme-darkhud {
   color-scheme: dark;
 }
 
