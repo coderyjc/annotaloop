@@ -83,7 +83,7 @@ const emptyExportPresetDraft: ExportPresetPayload = {
   name: "",
   baseTemplateId: "ai-pack",
   systemPrompt:
-    "你将收到 Loop Book 导出的 Markdown 批注包。请严格基于选中文本、上下文和读者评论工作，不要编造原文不存在的信息。",
+    "你将收到 Loop Book 导出的 Markdown 批注包。请严格基于选中文本和读者评论工作，不要编造原文不存在的信息。",
   taskPrompt:
     "根据批注完成下一轮修改。优先处理读者评论中明确提出的问题，并在输出中保留可追溯的章节结构。",
 };

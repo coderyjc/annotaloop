@@ -1031,10 +1031,14 @@ fn export_annotations(
     template_id: String,
     task_goal: Option<String>,
     prompt_preset_id: Option<String>,
+    include_empty_annotations: Option<bool>,
     state: State<AppState>,
 ) -> AppResult<String> {
     let conn = lock_conn(&state)?;
-    let rows = load_export_rows(&conn, &scope)?;
+    let mut rows = load_export_rows(&conn, &scope)?;
+    if include_empty_annotations == Some(false) {
+        rows.retain(|row| !row.annotation.comment.trim().is_empty());
+    }
     let preset = match prompt_preset_id {
         Some(preset_id) if !preset_id.trim().is_empty() => {
             Some(get_export_preset_by_id(&conn, preset_id.trim())?)

@@ -35,6 +35,9 @@ export function AnnotationCard({
   onOpen: () => void;
   onContextMenu: (event: ReactMouseEvent<HTMLButtonElement>) => void;
 }) {
+  const comment = annotation.comment.trim();
+  const summary = comment || annotation.selectedText.replace(/\s+/g, " ").trim();
+
   return (
     <button
       className={`annotation-card compact ${active ? "active" : ""} ${
@@ -49,7 +52,7 @@ export function AnnotationCard({
       title="单击跳转，双击查看详情"
     >
       <span className="annotation-dot" style={{ background: annotation.highlightColor }} />
-      <span className="annotation-summary">{annotation.comment.trim() || "无评论批注"}</span>
+      <span className={`annotation-summary ${comment ? "" : "source-preview"}`}>{summary}</span>
       {annotation.isPinned && <Pin className="annotation-pin-icon" size={13} aria-hidden="true" />}
     </button>
   );
@@ -204,6 +207,7 @@ export function ExportModal({
   taskGoal,
   presets,
   presetId,
+  includeEmptyAnnotations,
   exportText,
   copied,
   busy,
@@ -211,6 +215,7 @@ export function ExportModal({
   onTemplateChange,
   onTaskGoalChange,
   onPresetChange,
+  onIncludeEmptyAnnotationsChange,
   onExport,
   onCopy,
   onClose,
@@ -221,6 +226,7 @@ export function ExportModal({
   taskGoal: ExportTaskGoal;
   presets: ExportPreset[];
   presetId: string;
+  includeEmptyAnnotations: boolean;
   exportText: string;
   copied: boolean;
   busy: boolean;
@@ -228,6 +234,7 @@ export function ExportModal({
   onTemplateChange: (template: ExportTemplate) => void;
   onTaskGoalChange: (goal: ExportTaskGoal) => void;
   onPresetChange: (presetId: string) => void;
+  onIncludeEmptyAnnotationsChange: (enabled: boolean) => void;
   onExport: () => void;
   onCopy: () => void;
   onClose: () => void;
@@ -247,7 +254,7 @@ export function ExportModal({
         <header>
           <div>
             <p className="eyebrow">Export</p>
-            <h2>导出批注包</h2>
+            <h2>导出批注</h2>
           </div>
           <button className="icon-button" title="关闭" onClick={onClose}>
             <X size={18} />
@@ -261,49 +268,59 @@ export function ExportModal({
             全书
           </button>
         </div>
-        <label className="modal-field">
-          Prompt 预设
-          <select value={presetId} onChange={(event) => onPresetChange(event.target.value)}>
-            <option value="">使用内置任务目标</option>
-            {presets.map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="export-control-grid">
+          <label className="modal-field">
+            Prompt 预设
+            <select value={presetId} onChange={(event) => onPresetChange(event.target.value)}>
+              <option value="">使用内置任务目标</option>
+              {presets.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="modal-field">
+            模板
+            <select
+              value={selectedPreset?.baseTemplateId ?? template}
+              onChange={(event) => onTemplateChange(event.target.value as ExportTemplate)}
+              disabled={Boolean(selectedPreset)}
+            >
+              <option value="reading-notes">阅读笔记模板</option>
+              <option value="ai-pack">AI 修改包模板</option>
+              <option value="question-list">问题清单模板</option>
+              <option value="annotation-index">全书批注索引</option>
+            </select>
+          </label>
+          <label className="modal-field">
+            任务目标
+            <select
+              value={taskGoal}
+              onChange={(event) => onTaskGoalChange(event.target.value as ExportTaskGoal)}
+              disabled={Boolean(selectedPreset)}
+            >
+              <option value="polish">润色这一章</option>
+              <option value="rewrite">根据批注重写</option>
+              <option value="expand">扩展某些段落</option>
+              <option value="questions">生成问题清单</option>
+              <option value="creative">生成二次创作指令</option>
+            </select>
+          </label>
+        </div>
         {selectedPreset && (
           <div className="preset-export-summary">
             <strong>{selectedPreset.name}</strong>
             <span>正文结构：{exportTemplateLabel(selectedPreset.baseTemplateId)}</span>
           </div>
         )}
-        <label className="modal-field">
-          模板
-          <select
-            value={selectedPreset?.baseTemplateId ?? template}
-            onChange={(event) => onTemplateChange(event.target.value as ExportTemplate)}
-            disabled={Boolean(selectedPreset)}
-          >
-            <option value="reading-notes">阅读笔记模板</option>
-            <option value="ai-pack">AI 修改包模板</option>
-            <option value="question-list">问题清单模板</option>
-            <option value="annotation-index">全书批注索引</option>
-          </select>
-        </label>
-        <label className="modal-field">
-          任务目标
-          <select
-            value={taskGoal}
-            onChange={(event) => onTaskGoalChange(event.target.value as ExportTaskGoal)}
-            disabled={Boolean(selectedPreset)}
-          >
-            <option value="polish">润色这一章</option>
-            <option value="rewrite">根据批注重写</option>
-            <option value="expand">扩展某些段落</option>
-            <option value="questions">生成问题清单</option>
-            <option value="creative">生成二次创作指令</option>
-          </select>
+        <label className="export-option-row">
+          <input
+            type="checkbox"
+            checked={includeEmptyAnnotations}
+            onChange={(event) => onIncludeEmptyAnnotationsChange(event.target.checked)}
+          />
+          导出空批注
         </label>
         <div className="modal-actions export-actions">
           <button onClick={onExport} disabled={busy}>
@@ -541,14 +558,6 @@ export function SettingsPanel({
         </label>
 
         <RangeControl
-          label="上下文字数"
-          min={20}
-          max={300}
-          step={10}
-          value={settings.annotationContextChars}
-          onChange={(value) => onChange({ annotationContextChars: value })}
-        />
-        <RangeControl
           label="字号"
           min={14}
           max={24}
@@ -588,15 +597,6 @@ export function SettingsPanel({
           value={settings.paragraphSpacing}
           onChange={(value) => onChange({ paragraphSpacing: value })}
         />
-
-        <label>
-          页面质感
-          <select value={settings.surface} onChange={(event) => onChange({ surface: event.target.value })}>
-            <option value="warm">温润纸面</option>
-            <option value="plain">简洁白底</option>
-            <option value="ink">墨色底</option>
-          </select>
-        </label>
 
         <label>
           边框

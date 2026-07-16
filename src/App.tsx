@@ -279,6 +279,7 @@ export default function App() {
   const [exportTaskGoal, setExportTaskGoal] = useState<ExportTaskGoal>("rewrite");
   const [exportPresetId, setExportPresetId] = useState("");
   const [exportScope, setExportScope] = useState<"chapter" | "book">("chapter");
+  const [exportIncludeEmptyAnnotations, setExportIncludeEmptyAnnotations] = useState(true);
   const [exportText, setExportText] = useState("");
   const [copied, setCopied] = useState(false);
   const [draftClosing, setDraftClosing] = useState(false);
@@ -1203,6 +1204,7 @@ export default function App() {
         selectedPreset?.baseTemplateId ?? exportTemplate,
         selectedPreset ? undefined : exportTaskGoal,
         selectedPreset?.id,
+        exportIncludeEmptyAnnotations,
       );
       setExportText(markdown);
     } catch (err) {
@@ -1501,6 +1503,8 @@ export default function App() {
         { annotationIds: selectedNoteIds },
         "ai-pack",
         exportTaskGoal,
+        undefined,
+        true,
       );
       setBatchExportText(markdown);
       setBatchExportClosing(false);
@@ -1929,7 +1933,7 @@ export default function App() {
   if (!activeBook) {
     return (
       <div
-        className={`app-shell home-shell series-${effectiveThemeSeries} theme-${settings.theme} surface-${settings.surface}`}
+        className={`app-shell home-shell series-${effectiveThemeSeries} theme-${settings.theme}`}
         onContextMenu={suppressNativeContextMenu}
       >
         <AppTitlebar title="Loop Book" subtitle="首页" />
@@ -2167,7 +2171,7 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell reader-shell series-${effectiveThemeSeries} theme-${settings.theme} surface-${settings.surface} ${
+      className={`app-shell reader-shell series-${effectiveThemeSeries} theme-${settings.theme} ${
         isLeftCollapsed ? "left-collapsed" : ""
       } ${isRightCollapsed ? "right-collapsed" : ""} ${
         resizeTarget ? "resizing-panes" : ""
@@ -2444,6 +2448,7 @@ export default function App() {
           taskGoal={exportTaskGoal}
           presets={exportPresets}
           presetId={exportPresetId}
+          includeEmptyAnnotations={exportIncludeEmptyAnnotations}
           exportText={exportText}
           copied={copied}
           busy={busy}
@@ -2451,6 +2456,7 @@ export default function App() {
           onTemplateChange={setExportTemplate}
           onTaskGoalChange={setExportTaskGoal}
           onPresetChange={setExportPresetId}
+          onIncludeEmptyAnnotationsChange={setExportIncludeEmptyAnnotations}
           onExport={() => void handleExport()}
           onCopy={() => void copyExport()}
           onClose={closeExportModal}

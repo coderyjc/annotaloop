@@ -1,5 +1,5 @@
 use crate::domain::{ExportPreset, ExportRow};
-use crate::utils::now;
+use chrono::Local;
 
 pub fn render_export(
     template_id: &str,
@@ -8,7 +8,10 @@ pub fn render_export(
     rows: &[ExportRow],
 ) -> String {
     let mut out = String::new();
-    out.push_str(&format!("# Loop Book Export\n\nGenerated at: {}\n\n", now()));
+    out.push_str(&format!(
+        "# Loop Book Export\n\nGenerated at: {}\n\n",
+        export_timestamp()
+    ));
 
     let body_template_id = preset
         .map(|preset| preset.base_template_id.as_str())
@@ -46,31 +49,41 @@ pub fn render_export(
             for row in rows {
                 push_annotation_header(&mut out, row);
                 out.push_str("### Original Selection\n\n");
-                out.push_str("> ");
-                out.push_str(&row.annotation.selected_text.replace('\n', "\n> "));
-                out.push_str("\n\n### Context\n\n");
-                out.push_str("```text\n");
-                out.push_str(&format!(
-                    "{}{}{}\n",
-                    row.annotation.context_before,
-                    row.annotation.selected_text,
-                    row.annotation.context_after
-                ));
-                out.push_str("```\n\n### Reader Comment\n\n");
-                out.push_str(empty_marker(&row.annotation.comment));
-                out.push_str("\n\n### Suggested AI Task\n\n");
-                out.push_str("Revise the selected passage using the reader comment while preserving the chapter's voice and structure.\n\n");
+                push_selection_quote(&mut out, &row.annotation.selected_text);
+                let has_comment = if let Some(comment) = trimmed(&row.annotation.comment) {
+                    out.push_str("### Reader Comment\n\n");
+                    out.push_str(comment);
+                    out.push_str("\n\n");
+                    true
+                } else {
+                    false
+                };
+                out.push_str("### Suggested AI Task\n\n");
+                if has_comment {
+                    out.push_str("Revise the selected passage using the reader comment while preserving the chapter's voice and structure.\n\n");
+                } else {
+                    out.push_str("Review the selected passage while preserving the chapter's voice and structure.\n\n");
+                }
             }
         }
         "question-list" => {
             out.push_str("## Question List\n\n");
             for row in rows {
-                out.push_str(&format!(
-                    "- **{}** / {}: {}\n",
-                    row.chapter_title,
-                    fallback_heading(&row.annotation.heading_path),
-                    empty_marker(&row.annotation.comment)
-                ));
+                if let Some(comment) = trimmed(&row.annotation.comment) {
+                    out.push_str(&format!(
+                        "- **{}** / {}: {}\n",
+                        row.chapter_title,
+                        fallback_heading(&row.annotation.heading_path),
+                        comment
+                    ));
+                } else {
+                    out.push_str(&format!(
+                        "- **{}** / {}: {}\n",
+                        row.chapter_title,
+                        fallback_heading(&row.annotation.heading_path),
+                        inline_text(&row.annotation.selected_text)
+                    ));
+                }
             }
         }
         "annotation-index" => {
@@ -78,33 +91,39 @@ pub fn render_export(
             for row in rows {
                 push_annotation_header(&mut out, row);
                 out.push_str(&format!(
-                    "- Range: `{}..{}`\n- Color: `{}`\n- Tags: `{}`\n\n",
+                    "- Range: `{}..{}`\n- Color: `{}`\n",
                     row.annotation.start_offset,
                     row.annotation.end_offset,
-                    row.annotation.highlight_color,
-                    empty_marker(&row.annotation.tags)
+                    row.annotation.highlight_color
                 ));
-                out.push_str(&format!(
-                    "> {}\n\n{}\n\n",
-                    row.annotation.selected_text.replace('\n', "\n> "),
-                    empty_marker(&row.annotation.comment)
-                ));
+                if let Some(tags) = trimmed(&row.annotation.tags) {
+                    out.push_str(&format!("- Tags: `{tags}`\n"));
+                }
+                out.push('\n');
+                push_selection_quote(&mut out, &row.annotation.selected_text);
+                if let Some(comment) = trimmed(&row.annotation.comment) {
+                    out.push_str(comment);
+                    out.push_str("\n\n");
+                }
             }
         }
         _ => {
             out.push_str("## Reading Notes\n\n");
             for row in rows {
-                push_annotation_header(&mut out, row);
-                out.push_str(&format!(
-                    "> {}\n\n{}\n\n",
-                    row.annotation.selected_text.replace('\n', "\n> "),
-                    empty_marker(&row.annotation.comment)
-                ));
+                push_reading_note_block(&mut out, row);
+                if let Some(comment) = trimmed(&row.annotation.comment) {
+                    out.push_str(comment);
+                    out.push_str("\n\n");
+                }
             }
         }
     }
 
     out
+}
+
+fn export_timestamp() -> String {
+    Local::now().format("%Y-%m-%d %H:%M:%S").to_string()
 }
 
 fn normalize_task_goal(goal: &str) -> Option<&str> {
@@ -132,7 +151,7 @@ fn ai_system_instruction(goal: &str) -> &'static str {
         "expand" => "You will receive Markdown reading annotations from Loop Book. Expand only the passages that need elaboration. Add examples, transitions, or clarifications where comments ask for them, and avoid changing unrelated passages.",
         "questions" => "You will receive Markdown reading annotations from Loop Book. Convert comments and highlighted passages into a clear issue list and follow-up questions for revision. Group related concerns when possible.",
         "creative" => "You will receive Markdown reading annotations from Loop Book. Use the highlighted passages and comments as source constraints for a derivative writing brief. Preserve the core ideas while making the output ready for a new creative draft.",
-        _ => "You will receive Markdown reading annotations from Loop Book. Use the selected text, context, and comments as grounded instructions. Keep version boundaries intact and avoid mixing unrelated chapters.",
+        _ => "You will receive Markdown reading annotations from Loop Book. Use the selected text and comments as grounded instructions. Keep version boundaries intact and avoid mixing unrelated chapters.",
     }
 }
 
@@ -147,6 +166,21 @@ fn push_annotation_header(out: &mut String, row: &ExportRow) {
     }
 }
 
+fn push_reading_note_block(out: &mut String, row: &ExportRow) {
+    out.push_str("````\n");
+    out.push_str(&format!(
+        "## {}. {}\n\n",
+        row.chapter_sort_index + 1,
+        row.chapter_title
+    ));
+    if !row.annotation.heading_path.trim().is_empty() {
+        out.push_str(&format!("Path: `{}`\n\n", row.annotation.heading_path));
+    }
+    out.push_str("> ");
+    out.push_str(&row.annotation.selected_text.replace('\n', "\n> "));
+    out.push_str("\n````\n\n");
+}
+
 fn fallback_heading(heading_path: &str) -> &str {
     if heading_path.trim().is_empty() {
         "No heading"
@@ -155,10 +189,21 @@ fn fallback_heading(heading_path: &str) -> &str {
     }
 }
 
-fn empty_marker(value: &str) -> &str {
-    if value.trim().is_empty() {
-        "_Empty_"
+fn push_selection_quote(out: &mut String, selected_text: &str) {
+    out.push_str("> ");
+    out.push_str(&selected_text.replace('\n', "\n> "));
+    out.push_str("\n\n");
+}
+
+fn trimmed(value: &str) -> Option<&str> {
+    let value = value.trim();
+    if value.is_empty() {
+        None
     } else {
-        value
+        Some(value)
     }
+}
+
+fn inline_text(value: &str) -> String {
+    value.split_whitespace().collect::<Vec<_>>().join(" ")
 }

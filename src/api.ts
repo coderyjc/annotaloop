@@ -147,8 +147,15 @@ export async function exportAnnotations(
   templateId: ExportTemplate,
   taskGoal?: ExportTaskGoal,
   promptPresetId?: string,
+  includeEmptyAnnotations = true,
 ) {
-  return invoke<string>("export_annotations", { scope, templateId, taskGoal, promptPresetId });
+  return invoke<string>("export_annotations", {
+    scope,
+    templateId,
+    taskGoal,
+    promptPresetId,
+    includeEmptyAnnotations,
+  });
 }
 
 export async function exportBackup() {
