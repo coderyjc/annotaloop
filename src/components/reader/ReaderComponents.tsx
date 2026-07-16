@@ -1,13 +1,7 @@
 import { Check, Copy, FileText, GripVertical, Pin, PinOff, Save, Trash2, X } from "lucide-react";
 import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
 
-import {
-  getDefaultThemeForSeries,
-  getEffectiveThemeSeries,
-  getThemesForSeries,
-  highlightColors,
-  visibleThemeSeriesOptions,
-} from "../../constants";
+import { highlightColors } from "../../constants";
 import type { Annotation, AppSettings, Chapter, ExportPreset, ExportTaskGoal, ExportTemplate } from "../../types";
 import { chapterFileName } from "../../utils/chapters";
 
@@ -472,9 +466,6 @@ export function SettingsPanel({
   onChange: (patch: Partial<AppSettings>) => void;
   onClose: () => void;
 }) {
-  const activeThemeSeries = getEffectiveThemeSeries(settings.themeSeries);
-  const availableThemes = getThemesForSeries(activeThemeSeries);
-
   return (
     <div
       className={`settings-backdrop ${closing ? "is-closing" : ""}`}
@@ -495,55 +486,6 @@ export function SettingsPanel({
           </button>
         </header>
 
-        <label>
-          主题
-          <select value={settings.theme} onChange={(event) => onChange({ theme: event.target.value })}>
-            {availableThemes.map((theme) => (
-              <option key={theme.value} value={theme.value}>
-                {theme.label}
-              </option>
-            ))}
-          </select>
-          <select hidden aria-hidden="true" tabIndex={-1} value={settings.theme} onChange={(event) => onChange({ theme: event.target.value })}>
-            <option value="paper">纸张日间</option>
-            <option value="daylight">清亮日间</option>
-            <option value="mint">薄荷日间</option>
-            <option value="focus">专注日间</option>
-            <option value="night">暖黑夜读</option>
-            <option value="midnight">深蓝夜读</option>
-            <option value="graphite">石墨夜读</option>
-          </select>
-        </label>
-
-        <label>
-          主题系列
-          <select
-            value={activeThemeSeries}
-            onChange={(event) =>
-              onChange({
-                themeSeries: event.target.value,
-                theme: getDefaultThemeForSeries(event.target.value),
-              })
-            }
-          >
-            {visibleThemeSeriesOptions.map((series) => (
-              <option key={series.id} value={series.id}>
-                {series.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          字体
-          <select value={settings.fontFamily} onChange={(event) => onChange({ fontFamily: event.target.value })}>
-            <option value="Literata, Georgia, serif">Literata / Georgia</option>
-            <option value="'Noto Serif SC', 'Songti SC', serif">宋体阅读</option>
-            <option value="'IBM Plex Sans', 'Segoe UI', sans-serif">Plex Sans</option>
-            <option value="'JetBrains Mono', Consolas, monospace">Mono</option>
-          </select>
-        </label>
-
         <label className="settings-toggle">
           <span>
             <strong>聚焦模式</strong>
@@ -555,6 +497,16 @@ export function SettingsPanel({
             onChange={(event) => onChange({ focusMode: event.target.checked })}
           />
           <i aria-hidden="true" />
+        </label>
+
+        <label>
+          字体
+          <select value={settings.fontFamily} onChange={(event) => onChange({ fontFamily: event.target.value })}>
+            <option value="Literata, Georgia, serif">Literata / Georgia</option>
+            <option value="'Noto Serif SC', 'Songti SC', serif">宋体阅读</option>
+            <option value="'IBM Plex Sans', 'Segoe UI', sans-serif">Plex Sans</option>
+            <option value="'JetBrains Mono', Consolas, monospace">Mono</option>
+          </select>
         </label>
 
         <RangeControl

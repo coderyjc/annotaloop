@@ -47,18 +47,16 @@ pub fn render_export(
         "ai-pack" => {
             out.push_str("## AI Revision Packet\n\n");
             for row in rows {
-                push_annotation_header(&mut out, row);
-                out.push_str("### Original Selection\n\n");
-                push_selection_quote(&mut out, &row.annotation.selected_text);
+                push_annotation_source_block(&mut out, row);
                 let has_comment = if let Some(comment) = trimmed(&row.annotation.comment) {
-                    out.push_str("### Reader Comment\n\n");
+                    out.push_str("**Reader Comment**\n\n");
                     out.push_str(comment);
                     out.push_str("\n\n");
                     true
                 } else {
                     false
                 };
-                out.push_str("### Suggested AI Task\n\n");
+                out.push_str("**Suggested AI Task**\n\n");
                 if has_comment {
                     out.push_str("Revise the selected passage using the reader comment while preserving the chapter's voice and structure.\n\n");
                 } else {
@@ -69,27 +67,19 @@ pub fn render_export(
         "question-list" => {
             out.push_str("## Question List\n\n");
             for row in rows {
+                push_annotation_source_block(&mut out, row);
                 if let Some(comment) = trimmed(&row.annotation.comment) {
-                    out.push_str(&format!(
-                        "- **{}** / {}: {}\n",
-                        row.chapter_title,
-                        fallback_heading(&row.annotation.heading_path),
-                        comment
-                    ));
-                } else {
-                    out.push_str(&format!(
-                        "- **{}** / {}: {}\n",
-                        row.chapter_title,
-                        fallback_heading(&row.annotation.heading_path),
-                        inline_text(&row.annotation.selected_text)
-                    ));
+                    out.push_str("**Reader Comment / Question**\n\n");
+                    out.push_str(comment);
+                    out.push_str("\n\n");
                 }
             }
         }
         "annotation-index" => {
             out.push_str("## Full Annotation Index\n\n");
             for row in rows {
-                push_annotation_header(&mut out, row);
+                push_annotation_source_block(&mut out, row);
+                out.push_str("**Metadata**\n\n");
                 out.push_str(&format!(
                     "- Range: `{}..{}`\n- Color: `{}`\n",
                     row.annotation.start_offset,
@@ -100,8 +90,8 @@ pub fn render_export(
                     out.push_str(&format!("- Tags: `{tags}`\n"));
                 }
                 out.push('\n');
-                push_selection_quote(&mut out, &row.annotation.selected_text);
                 if let Some(comment) = trimmed(&row.annotation.comment) {
+                    out.push_str("**Comment**\n\n");
                     out.push_str(comment);
                     out.push_str("\n\n");
                 }
@@ -110,7 +100,7 @@ pub fn render_export(
         _ => {
             out.push_str("## Reading Notes\n\n");
             for row in rows {
-                push_reading_note_block(&mut out, row);
+                push_annotation_source_block(&mut out, row);
                 if let Some(comment) = trimmed(&row.annotation.comment) {
                     out.push_str(comment);
                     out.push_str("\n\n");
@@ -155,19 +145,8 @@ fn ai_system_instruction(goal: &str) -> &'static str {
     }
 }
 
-fn push_annotation_header(out: &mut String, row: &ExportRow) {
-    out.push_str(&format!(
-        "## {}. {}\n\n",
-        row.chapter_sort_index + 1,
-        row.chapter_title
-    ));
-    if !row.annotation.heading_path.trim().is_empty() {
-        out.push_str(&format!("Path: `{}`\n\n", row.annotation.heading_path));
-    }
-}
-
-fn push_reading_note_block(out: &mut String, row: &ExportRow) {
-    out.push_str("````\n");
+fn push_annotation_source_block(out: &mut String, row: &ExportRow) {
+    out.push_str("````markdown\n");
     out.push_str(&format!(
         "## {}. {}\n\n",
         row.chapter_sort_index + 1,
@@ -181,20 +160,6 @@ fn push_reading_note_block(out: &mut String, row: &ExportRow) {
     out.push_str("\n````\n\n");
 }
 
-fn fallback_heading(heading_path: &str) -> &str {
-    if heading_path.trim().is_empty() {
-        "No heading"
-    } else {
-        heading_path
-    }
-}
-
-fn push_selection_quote(out: &mut String, selected_text: &str) {
-    out.push_str("> ");
-    out.push_str(&selected_text.replace('\n', "\n> "));
-    out.push_str("\n\n");
-}
-
 fn trimmed(value: &str) -> Option<&str> {
     let value = value.trim();
     if value.is_empty() {
@@ -202,8 +167,4 @@ fn trimmed(value: &str) -> Option<&str> {
     } else {
         Some(value)
     }
-}
-
-fn inline_text(value: &str) -> String {
-    value.split_whitespace().collect::<Vec<_>>().join(" ")
 }
