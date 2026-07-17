@@ -83,7 +83,7 @@ const emptyExportPresetDraft: ExportPresetPayload = {
   name: "",
   baseTemplateId: "ai-pack",
   systemPrompt:
-    "你将收到 Loop Book 导出的 Markdown 批注包。请严格基于选中文本和读者评论工作，不要编造原文不存在的信息。",
+    "你将收到 AnnotaLoop 导出的 Markdown 批注包。请严格基于选中文本和读者评论工作，不要编造原文不存在的信息。",
   taskPrompt:
     "根据批注完成下一轮修改。优先处理读者评论中明确提出的问题，并在输出中保留可追溯的章节结构。",
 };
@@ -287,7 +287,7 @@ export function DeleteBookModal({
           <AlertTriangle size={22} />
           <div>
             <strong>{book.name}</strong>
-            <p>将从 Loop Book 中删除这本书的索引、章节版本、阅读进度和批注。原始 Markdown 文件夹不会被删除。</p>
+            <p>将从 AnnotaLoop 中删除这本书的索引、章节版本、阅读进度和批注。原始 Markdown 文件夹不会被删除。</p>
           </div>
         </div>
         <div className="modal-actions">

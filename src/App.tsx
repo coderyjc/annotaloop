@@ -8,14 +8,16 @@ import {
   FolderPlus,
   Grid3X3,
   Highlighter,
+  Maximize2,
   MessageSquare,
+  Minimize2,
   Minus,
   Search,
   Settings,
   Square,
   X,
 } from "lucide-react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { cursorPosition, getCurrentWindow } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import {
   type CSSProperties,
@@ -133,6 +135,12 @@ interface ReaderSearchMatch {
   excerpt: string;
 }
 
+interface FullscreenReveal {
+  top: boolean;
+  left: boolean;
+  right: boolean;
+}
+
 type ViewTransitionDocument = Document & {
   startViewTransition?: (callback: () => void) => { finished: Promise<void> };
 };
@@ -140,6 +148,11 @@ type ViewTransitionDocument = Document & {
 const uiExitMs = 150;
 const readerMotionMs = 220;
 const noticeAutoDismissMs = 2000;
+const fullscreenEdgePx = 24;
+const fullscreenTopKeepPx = 126;
+const fullscreenSideKeepPaddingPx = 36;
+const fullscreenTopPollMs = 80;
+const fullscreenTopCursorPx = 8;
 
 function AppTitlebar({ title, subtitle }: { title: string; subtitle: string }) {
   function handleDrag(event: ReactMouseEvent<HTMLDivElement>) {
@@ -262,6 +275,12 @@ export default function App() {
   const [sortDragChapterId, setSortDragChapterId] = useState<string | null>(null);
   const [isLeftCollapsed, setIsLeftCollapsed] = useState(false);
   const [isRightCollapsed, setIsRightCollapsed] = useState(false);
+  const [isReadingFullscreen, setIsReadingFullscreen] = useState(false);
+  const [fullscreenReveal, setFullscreenReveal] = useState<FullscreenReveal>({
+    top: false,
+    left: false,
+    right: false,
+  });
   const [leftPaneWidth, setLeftPaneWidth] = useState(284);
   const [rightPaneWidth, setRightPaneWidth] = useState(344);
   const [chapterPaneHeight, setChapterPaneHeight] = useState(320);
@@ -372,6 +391,52 @@ export default function App() {
       unlisten?.();
     };
   }, [activeBook, busy]);
+
+  useEffect(() => {
+    if (activeBook || !isReadingFullscreen) return;
+    setIsReadingFullscreen(false);
+    setFullscreenReveal({ top: false, left: false, right: false });
+    void getCurrentWindow()
+      .setFullscreen(false)
+      .catch((err) => setError(readError(err)));
+  }, [activeBook, isReadingFullscreen]);
+
+  useEffect(() => {
+    if (!isReadingFullscreen) return;
+
+    let cancelled = false;
+    let sampling = false;
+    const appWindow = getCurrentWindow();
+
+    async function sampleTopEdge() {
+      if (cancelled || sampling) return;
+      sampling = true;
+      try {
+        const [cursor, windowPosition] = await Promise.all([
+          cursorPosition(),
+          appWindow.outerPosition(),
+        ]);
+        if (cancelled) return;
+        if (cursor.y - windowPosition.y <= fullscreenTopCursorPx) {
+          revealFullscreenChrome("top");
+        }
+      } catch {
+        // Edge reveal still works through pointer events when cursor sampling is unavailable.
+      } finally {
+        sampling = false;
+      }
+    }
+
+    void sampleTopEdge();
+    const timer = window.setInterval(() => {
+      void sampleTopEdge();
+    }, fullscreenTopPollMs);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [isReadingFullscreen]);
 
   useEffect(() => {
     if (!reader || pendingScroll === null) return;
@@ -594,6 +659,12 @@ export default function App() {
         event.stopPropagation();
         return;
       }
+      if (event.key === "Escape" && isReadingFullscreen) {
+        event.preventDefault();
+        event.stopPropagation();
+        exitReadingFullscreen();
+        return;
+      }
       if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === "p") {
         event.preventDefault();
         return;
@@ -639,6 +710,7 @@ export default function App() {
     renameBookDraft,
     bookMenu,
     importPreview,
+    isReadingFullscreen,
   ]);
 
   const readerStyle = useMemo(
@@ -1627,6 +1699,60 @@ export default function App() {
     animateClose(setExportClosing, () => setExportOpen(false));
   }
 
+  async function toggleReadingFullscreen() {
+    const next = !isReadingFullscreen;
+    setIsReadingFullscreen(next);
+    setFullscreenReveal({ top: false, left: false, right: false });
+    try {
+      await getCurrentWindow().setFullscreen(next);
+    } catch (err) {
+      setIsReadingFullscreen(!next);
+      setError(readError(err));
+    }
+  }
+
+  function exitReadingFullscreen() {
+    setIsReadingFullscreen(false);
+    setFullscreenReveal({ top: false, left: false, right: false });
+    void getCurrentWindow()
+      .setFullscreen(false)
+      .catch((err) => setError(readError(err)));
+  }
+
+  function handleReadingFullscreenPointerMove(event: ReactMouseEvent<HTMLDivElement>) {
+    if (!isReadingFullscreen) return;
+
+    const { clientX, clientY } = event;
+    const viewportWidth = window.innerWidth;
+
+    setFullscreenReveal((current) => {
+      const next = {
+        top: clientY <= fullscreenEdgePx || (current.top && clientY <= fullscreenTopKeepPx),
+        left:
+          clientX <= fullscreenEdgePx ||
+          (current.left && clientX <= leftPaneWidth + fullscreenSideKeepPaddingPx),
+        right:
+          clientX >= viewportWidth - fullscreenEdgePx ||
+          (current.right && clientX >= viewportWidth - rightPaneWidth - fullscreenSideKeepPaddingPx),
+      };
+
+      if (next.top === current.top && next.left === current.left && next.right === current.right) {
+        return current;
+      }
+
+      return next;
+    });
+  }
+
+  function hideReadingFullscreenChrome() {
+    if (!isReadingFullscreen) return;
+    setFullscreenReveal({ top: false, left: false, right: false });
+  }
+
+  function revealFullscreenChrome(edge: keyof FullscreenReveal) {
+    setFullscreenReveal((current) => (current[edge] ? current : { ...current, [edge]: true }));
+  }
+
   function closeWorkbenchNoteDetail() {
     animateClose(setNoteDetailClosing, () => setWorkbenchNoteDetail(null));
   }
@@ -1828,6 +1954,9 @@ export default function App() {
 
   function focusReaderSearchInput() {
     setIsRightCollapsed(false);
+    if (isReadingFullscreen) {
+      setFullscreenReveal((current) => ({ ...current, right: true }));
+    }
     window.setTimeout(() => {
       readerSearchInputRef.current?.focus();
       readerSearchInputRef.current?.select();
@@ -1936,12 +2065,12 @@ export default function App() {
         className={`app-shell home-shell series-${effectiveThemeSeries} theme-${settings.theme}`}
         onContextMenu={suppressNativeContextMenu}
       >
-        <AppTitlebar title="Loop Book" subtitle="首页" />
+        <AppTitlebar title="AnnotaLoop" subtitle="首页" />
         <TopNotice error={error} notice={notice} closing={topNoticeClosing} onClose={closeTopNotice} />
         <header className="home-header">
           <div>
             <p className="eyebrow">Local Markdown Annotation Studio</p>
-            <h1>Loop Book</h1>
+            <h1>AnnotaLoop</h1>
             <p className="home-subtitle">把 AI 生成的 Markdown 文档读完、批注好，再导出成下一轮 AI 可以直接消化的材料。</p>
           </div>
           <div className="header-actions">
@@ -2175,12 +2304,37 @@ export default function App() {
         isLeftCollapsed ? "left-collapsed" : ""
       } ${isRightCollapsed ? "right-collapsed" : ""} ${
         resizeTarget ? "resizing-panes" : ""
+      } ${isReadingFullscreen ? "reading-fullscreen" : ""} ${
+        fullscreenReveal.top ? "fullscreen-top-open" : ""
+      } ${fullscreenReveal.left ? "fullscreen-left-open" : ""} ${
+        fullscreenReveal.right ? "fullscreen-right-open" : ""
       }`}
       style={readerStyle}
       onContextMenu={suppressNativeContextMenu}
+      onMouseMove={handleReadingFullscreenPointerMove}
+      onMouseLeave={hideReadingFullscreenChrome}
     >
-      <AppTitlebar title={activeBook.name} subtitle={reader?.chapter.title ?? "阅读器"} />
+      <AppTitlebar title={activeBook.name} subtitle={reader?.chapter.title ?? "AnnotaLoop"} />
       <TopNotice error={error} notice={notice} closing={topNoticeClosing} onClose={closeTopNotice} />
+      {isReadingFullscreen && (
+        <>
+          <div
+            className="fullscreen-edge fullscreen-edge-top"
+            aria-hidden="true"
+            onMouseEnter={() => revealFullscreenChrome("top")}
+          />
+          <div
+            className="fullscreen-edge fullscreen-edge-left"
+            aria-hidden="true"
+            onMouseEnter={() => revealFullscreenChrome("left")}
+          />
+          <div
+            className="fullscreen-edge fullscreen-edge-right"
+            aria-hidden="true"
+            onMouseEnter={() => revealFullscreenChrome("right")}
+          />
+        </>
+      )}
       <aside className="reader-left" ref={readerLeftRef}>
         <div className="reader-bookbar">
           <button className="icon-button" title="返回首页" onClick={() => {
@@ -2294,6 +2448,13 @@ export default function App() {
               onClick={openExportModal}
             >
               <Download size={18} />
+            </button>
+            <button
+              className={`icon-button ${isReadingFullscreen ? "active" : ""}`}
+              title={isReadingFullscreen ? "退出全屏阅读 (Esc)" : "全屏阅读"}
+              onClick={() => void toggleReadingFullscreen()}
+            >
+              {isReadingFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
             </button>
             <button className="icon-button" title="阅读器设置" onClick={openReaderSettingsPanel}>
               <Settings size={18} />

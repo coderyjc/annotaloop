@@ -78,7 +78,7 @@ pub fn run() {
             get_latest_reading_progress
         ])
         .run(tauri::generate_context!())
-        .expect("failed to run Loop Book");
+        .expect("failed to run AnnotaLoop");
 }
 
 #[tauri::command]
@@ -161,12 +161,12 @@ fn pick_backup_save_path() -> AppResult<Option<PathBuf>> {
             .filter(|char| char.is_ascii_digit())
             .take(14)
             .collect::<String>();
-        let default_name = format!("loop-book-backup-{timestamp}.sqlite3");
+        let default_name = format!("annotaloop-backup-{timestamp}.sqlite3");
         let script = format!(
             r#"
 Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.SaveFileDialog
-$dialog.Title = 'Export Loop Book backup'
+$dialog.Title = 'Export AnnotaLoop backup'
 $dialog.Filter = 'SQLite backup (*.sqlite3)|*.sqlite3|All files (*.*)|*.*'
 $dialog.FileName = '{}'
 if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{
@@ -205,7 +205,7 @@ fn pick_backup_open_path() -> AppResult<Option<PathBuf>> {
         let script = r#"
 Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.OpenFileDialog
-$dialog.Title = 'Restore Loop Book backup'
+$dialog.Title = 'Restore AnnotaLoop backup'
 $dialog.Filter = 'SQLite backup (*.sqlite3)|*.sqlite3|All files (*.*)|*.*'
 if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
   [Console]::Out.Write($dialog.FileName)

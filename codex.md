@@ -1,6 +1,6 @@
-# Loop Book
+# AnnotaLoop
 
-Loop Book 是一个本地优先的 Markdown 桌面阅读器，用来阅读按章节拆分的 Markdown 书稿，并在阅读过程中完成高亮、批注、章节版本隔离和面向 AI 工作流的批注导出。
+AnnotaLoop 是一个本地优先的 Markdown 桌面阅读器，用来阅读按章节拆分的 Markdown 书稿，并在阅读过程中完成高亮、批注、章节版本隔离和面向 AI 工作流的批注导出。
 
 它适合处理本地书稿、AI 生成的长文档、课程讲义、研究笔记等内容：原始 Markdown 文件保留在原目录，应用只维护索引、版本快照、批注、阅读进度和阅读器设置。
 
@@ -11,7 +11,7 @@ Loop Book 是一个本地优先的 Markdown 桌面阅读器，用来阅读按章
 - 当前版本：`v0.4.3`。
 - 当前工作区：`E:\code\github\annotaloop`。
 - 用户验证入口：`src-tauri/target/release/loop-book.exe`。完成功能或修复后，默认直接执行 `npm.cmd run tauri -- build`，不要只停在前端构建或 dev server。
-- 最近一次 release 构建输出为 `src-tauri/target/release/loop-book.exe` 和 `src-tauri/target/release/bundle/nsis/Loop Book_0.4.3_x64-setup.exe`。
+- 最近一次 release 构建输出为 `src-tauri/target/release/loop-book.exe` 和 `src-tauri/target/release/bundle/nsis/AnnotaLoop_0.4.3_x64-setup.exe`。
 - 目前窗口已改为 Tauri 无原生装饰窗口：`src-tauri/tauri.conf.json` 中 `decorations` 为 `false`，应用内标题栏在 `src/App.tsx` 的 `AppTitlebar` 和 `src/styles.css` 的 `.desktop-titlebar`。
 - 首页 gallery 书籍置顶不是图钉方案，而是左侧渐变色条；对应样式是 `.book-entry::before` 和 `.book-entry.is-pinned::before`。
 - 阅读器正文上方显示“本文共 xx 字 / 阅读需要 xx 分钟”，正文底部有“上一篇 / 下一篇”导航。
@@ -148,7 +148,7 @@ npm.cmd run tauri -- build
 
 ```text
 src-tauri/target/release/loop-book.exe
-src-tauri/target/release/bundle/nsis/Loop Book_0.4.3_x64-setup.exe
+src-tauri/target/release/bundle/nsis/AnnotaLoop_0.4.3_x64-setup.exe
 ```
 
 ## 数据存储
@@ -242,14 +242,14 @@ src-tauri/target/release/loop-book.exe
   - `npm.cmd run tauri -- build`
 - 最近一次 v0.4.3 release 构建输出：
   - `src-tauri/target/release/loop-book.exe`
-  - `src-tauri/target/release/bundle/nsis/Loop Book_0.4.3_x64-setup.exe`
+  - `src-tauri/target/release/bundle/nsis/AnnotaLoop_0.4.3_x64-setup.exe`
 - 最近一次自定义标题栏更新后已通过：
   - `npm.cmd run build`
   - `npm.cmd run tauri -- build`
 - Windows 安装包输出位置通常是：
 
 ```text
-src-tauri/target/release/bundle/nsis/Loop Book_0.4.3_x64-setup.exe
+src-tauri/target/release/bundle/nsis/AnnotaLoop_0.4.3_x64-setup.exe
 ```
 - 如果 `cargo check` 或 Tauri 打包时报错，提示去读取另一个旧目录下的 `target/.../permissions/...app_hide.toml`，通常是 Tauri/Rust 构建缓存里残留了旧绝对路径。排查时可以临时使用独立 target 目录：
 

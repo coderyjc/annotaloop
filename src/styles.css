@@ -90,6 +90,11 @@ button:disabled {
     color-mix(in srgb, var(--toolbar-bg) 92%, var(--paper-strong));
   color: var(--ink);
   cursor: default;
+  transition:
+    transform 190ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
   user-select: none;
 }
 
@@ -3353,6 +3358,31 @@ button:disabled {
   animation: surface-enter 170ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+.reader-left {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.left-resizer {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.reader-main {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.right-resizer {
+  grid-column: 4;
+  grid-row: 1;
+}
+
+.reader-right {
+  grid-column: 5;
+  grid-row: 1;
+}
+
 .reader-shell.left-collapsed {
   grid-template-columns: 0 0 minmax(0, 1fr) 8px var(--reader-right-width);
 }
@@ -3367,6 +3397,159 @@ button:disabled {
 
 .reader-shell.resizing-panes {
   transition: none;
+}
+
+.reader-shell.reading-fullscreen {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 100vh;
+  padding-top: 0;
+  transition:
+    grid-template-columns 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    padding 190ms ease;
+}
+
+.reader-shell.reading-fullscreen.left-collapsed,
+.reader-shell.reading-fullscreen.right-collapsed,
+.reader-shell.reading-fullscreen.left-collapsed.right-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.reader-shell.reading-fullscreen .desktop-titlebar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-100%);
+}
+
+.reader-shell.reading-fullscreen.fullscreen-top-open .desktop-titlebar {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.reader-shell.reading-fullscreen .reader-main {
+  grid-column: 1;
+  grid-row: 1;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.fullscreen-edge {
+  position: fixed;
+  z-index: 57;
+  pointer-events: auto;
+}
+
+.fullscreen-edge-top {
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 18px;
+}
+
+.fullscreen-edge-left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 18px;
+}
+
+.fullscreen-edge-right {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+}
+
+.reader-shell.reading-fullscreen.fullscreen-top-open .fullscreen-edge-top,
+.reader-shell.reading-fullscreen.fullscreen-left-open .fullscreen-edge-left,
+.reader-shell.reading-fullscreen.fullscreen-right-open .fullscreen-edge-right {
+  pointer-events: none;
+}
+
+.reader-shell.reading-fullscreen .reader-toolbar {
+  position: fixed;
+  top: var(--titlebar-height);
+  right: 0;
+  left: 0;
+  z-index: 54;
+  min-height: 76px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(-100% - var(--titlebar-height)));
+  transition:
+    transform 210ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 160ms ease,
+    box-shadow 180ms ease;
+}
+
+.reader-shell.reading-fullscreen.fullscreen-top-open .reader-toolbar {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  box-shadow: 0 18px 36px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.reader-shell.reading-fullscreen .reader-left,
+.reader-shell.reading-fullscreen .reader-right {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 50;
+  width: var(--reader-left-width);
+  visibility: visible;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 230ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 170ms ease,
+    box-shadow 190ms ease;
+}
+
+.reader-shell.reading-fullscreen .reader-left {
+  left: 0;
+  transform: translateX(calc(-100% - 14px));
+}
+
+.reader-shell.reading-fullscreen .reader-right {
+  right: 0;
+  width: var(--reader-right-width);
+  transform: translateX(calc(100% + 14px));
+}
+
+.reader-shell.reading-fullscreen.fullscreen-left-open .reader-left,
+.reader-shell.reading-fullscreen.fullscreen-right-open .reader-right {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+  box-shadow: 0 0 34px color-mix(in srgb, var(--ink) 15%, transparent);
+}
+
+.reader-shell.reading-fullscreen.left-collapsed .reader-left {
+  border-right: 1px solid rgba(32, 33, 29, 0.14);
+}
+
+.reader-shell.reading-fullscreen.right-collapsed .reader-right {
+  border-left: 1px solid rgba(32, 33, 29, 0.14);
+  border-color: rgba(32, 33, 29, 0.14);
+}
+
+.reader-shell.reading-fullscreen .left-resizer,
+.reader-shell.reading-fullscreen .right-resizer {
+  display: none;
+}
+
+.reader-shell.reading-fullscreen .reading-surface {
+  padding: clamp(24px, 4.8vh, 54px) clamp(18px, 4vw, 64px);
+  transition: padding 200ms ease;
+}
+
+.reader-shell.reading-fullscreen .markdown-body {
+  min-height: calc(100vh - clamp(48px, 9.6vh, 108px));
+}
+
+.reader-shell.reading-fullscreen .modal-backdrop,
+.reader-shell.reading-fullscreen .settings-backdrop {
+  inset: 0;
 }
 
 .pane-resize-active {

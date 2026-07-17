@@ -9,7 +9,7 @@ pub fn render_export(
 ) -> String {
     let mut out = String::new();
     out.push_str(&format!(
-        "# Loop Book Export\n\nGenerated at: {}\n\n",
+        "# AnnotaLoop Export\n\nGenerated at: {}\n\n",
         export_timestamp()
     ));
 
@@ -136,12 +136,12 @@ fn task_goal_label(goal: &str) -> &str {
 
 fn ai_system_instruction(goal: &str) -> &'static str {
     match goal {
-        "polish" => "You will receive Markdown reading annotations from Loop Book. Polish the relevant chapter text according to the comments while preserving the author's structure, terminology, and intent. Do not invent facts.",
-        "rewrite" => "You will receive Markdown reading annotations from Loop Book. Rewrite the chapter sections referenced by the annotations. Treat reader comments as requirements, keep useful original ideas, and explain any major structural changes.",
-        "expand" => "You will receive Markdown reading annotations from Loop Book. Expand only the passages that need elaboration. Add examples, transitions, or clarifications where comments ask for them, and avoid changing unrelated passages.",
-        "questions" => "You will receive Markdown reading annotations from Loop Book. Convert comments and highlighted passages into a clear issue list and follow-up questions for revision. Group related concerns when possible.",
-        "creative" => "You will receive Markdown reading annotations from Loop Book. Use the highlighted passages and comments as source constraints for a derivative writing brief. Preserve the core ideas while making the output ready for a new creative draft.",
-        _ => "You will receive Markdown reading annotations from Loop Book. Use the selected text and comments as grounded instructions. Keep version boundaries intact and avoid mixing unrelated chapters.",
+        "polish" => "You will receive Markdown reading annotations from AnnotaLoop. Polish the relevant chapter text according to the comments while preserving the author's structure, terminology, and intent. Do not invent facts.",
+        "rewrite" => "You will receive Markdown reading annotations from AnnotaLoop. Rewrite the chapter sections referenced by the annotations. Treat reader comments as requirements, keep useful original ideas, and explain any major structural changes.",
+        "expand" => "You will receive Markdown reading annotations from AnnotaLoop. Expand only the passages that need elaboration. Add examples, transitions, or clarifications where comments ask for them, and avoid changing unrelated passages.",
+        "questions" => "You will receive Markdown reading annotations from AnnotaLoop. Convert comments and highlighted passages into a clear issue list and follow-up questions for revision. Group related concerns when possible.",
+        "creative" => "You will receive Markdown reading annotations from AnnotaLoop. Use the highlighted passages and comments as source constraints for a derivative writing brief. Preserve the core ideas while making the output ready for a new creative draft.",
+        _ => "You will receive Markdown reading annotations from AnnotaLoop. Use the selected text and comments as grounded instructions. Keep version boundaries intact and avoid mixing unrelated chapters.",
     }
 }
 

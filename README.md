@@ -1,8 +1,8 @@
-# Loop Book
+# AnnotaLoop
 
-Loop Book 是一个本地优先的 Markdown 桌面阅读器，适合阅读按章节拆分的本地书稿、课程讲义、研究笔记和 AI 生成的长文档。它把阅读、高亮、批注、章节版本快照和面向 AI 工作流的导出放在同一个桌面应用里。
+AnnotaLoop 是一个本地优先的 Markdown 桌面阅读器，适合阅读按章节拆分的本地书稿、课程讲义、研究笔记和 AI 生成的长文档。它把阅读、高亮、批注、章节版本快照和面向 AI 工作流的导出放在同一个桌面应用里。
 
-原始 Markdown 文件会保留在原目录。Loop Book 只维护本地索引、章节快照、批注、阅读进度和阅读器设置。
+原始 Markdown 文件会保留在原目录。AnnotaLoop 只维护本地索引、章节快照、批注、阅读进度和阅读器设置。
 
 ![](./assets/banner.png)
 
@@ -32,7 +32,7 @@ Windows 用户可以在 [Releases](https://github.com/coderyjc/annotaloop/releas
 常见构建产物名称：
 
 ```text
-Loop Book_0.4.3_x64-setup.exe
+AnnotaLoop_0.4.3_x64-setup.exe
 ```
 
 ## 技术栈
@@ -89,7 +89,7 @@ npm.cmd run tauri -- build
 
 ```text
 src-tauri/target/release/loop-book.exe
-src-tauri/target/release/bundle/nsis/Loop Book_0.4.3_x64-setup.exe
+src-tauri/target/release/bundle/nsis/AnnotaLoop_0.4.3_x64-setup.exe
 ```
 
 ## v0.4.3 更新摘要
@@ -129,7 +129,7 @@ npm.cmd run tauri -- build
 
 ## 数据存储
 
-Loop Book 会在系统应用数据目录下创建本地 SQLite 数据库：
+AnnotaLoop 会在系统应用数据目录下创建本地 SQLite 数据库：
 
 ```text
 loop-book.sqlite3

@@ -2,7 +2,7 @@
 name = "loop-book"
 version = "0.4.3"
 description = "A local-first Markdown reader for annotation loops."
-authors = ["Loop Book"]
+authors = ["AnnotaLoop"]
 edition = "2021"
 
 [lib]
