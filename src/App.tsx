@@ -17,7 +17,8 @@ import {
   Square,
   X,
 } from "lucide-react";
-import { cursorPosition, getCurrentWindow } from "@tauri-apps/api/window";
+import { PhysicalPosition, PhysicalSize } from "@tauri-apps/api/dpi";
+import { availableMonitors, cursorPosition, getCurrentWindow } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import {
   type CSSProperties,
@@ -153,6 +154,17 @@ const fullscreenTopKeepPx = 126;
 const fullscreenSideKeepPaddingPx = 36;
 const fullscreenTopPollMs = 80;
 const fullscreenTopCursorPx = 8;
+const windowPlacementStorageKey = "annotaloop.windowPlacement.v1";
+const windowPlacementSaveDelayMs = 320;
+const minimumRestoredWindowSize = 360;
+
+interface SavedWindowPlacement {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  savedAt: number;
+}
 
 function AppTitlebar({ title, subtitle }: { title: string; subtitle: string }) {
   function handleDrag(event: ReactMouseEvent<HTMLDivElement>) {
@@ -326,6 +338,84 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const appWindow = getCurrentWindow();
+    const unlisteners: Array<() => void> = [];
+    let cancelled = false;
+    let restored = false;
+    let saveTimer: number | null = null;
+
+    async function restoreWindowPlacement() {
+      const saved = readSavedWindowPlacement();
+      if (!saved) return;
+      const monitors = await availableMonitors();
+      if (!isWindowPlacementVisible(saved, monitors)) return;
+      await appWindow.setSize(new PhysicalSize(saved.width, saved.height));
+      await appWindow.setPosition(new PhysicalPosition(saved.x, saved.y));
+    }
+
+    async function saveWindowPlacement() {
+      saveTimer = null;
+      try {
+        const [isMaximized, isFullscreen] = await Promise.all([
+          appWindow.isMaximized(),
+          appWindow.isFullscreen(),
+        ]);
+        if (isMaximized || isFullscreen) return;
+        const [position, size] = await Promise.all([
+          appWindow.outerPosition(),
+          appWindow.outerSize(),
+        ]);
+        writeSavedWindowPlacement({
+          x: Math.round(position.x),
+          y: Math.round(position.y),
+          width: Math.round(size.width),
+          height: Math.round(size.height),
+          savedAt: Date.now(),
+        });
+      } catch {
+        // Window placement is a convenience; failure should not interrupt reading.
+      }
+    }
+
+    function scheduleSaveWindowPlacement() {
+      if (!restored || cancelled) return;
+      if (saveTimer !== null) window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(() => {
+        void saveWindowPlacement();
+      }, windowPlacementSaveDelayMs);
+    }
+
+    void restoreWindowPlacement()
+      .catch(() => {
+        localStorage.removeItem(windowPlacementStorageKey);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        restored = true;
+        void appWindow.onMoved(() => scheduleSaveWindowPlacement()).then((unlisten) => {
+          if (cancelled) {
+            unlisten();
+          } else {
+            unlisteners.push(unlisten);
+          }
+        });
+        void appWindow.onResized(() => scheduleSaveWindowPlacement()).then((unlisten) => {
+          if (cancelled) {
+            unlisten();
+          } else {
+            unlisteners.push(unlisten);
+          }
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      if (saveTimer !== null) window.clearTimeout(saveTimer);
+      unlisteners.forEach((unlisten) => unlisten());
+    };
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (readerMotionTimerRef.current !== null) {
         window.clearTimeout(readerMotionTimerRef.current);
@@ -349,6 +439,21 @@ export default function App() {
       window.clearTimeout(clearTimer);
     };
   }, [notice, error]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const shell = document.querySelector<HTMLElement>(".app-shell");
+      const shellBackground = shell
+        ? getComputedStyle(shell).getPropertyValue("--shell-bg").trim()
+        : "";
+      document.documentElement.style.setProperty(
+        "--app-root-bg",
+        shellBackground || "#eef0ea",
+      );
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [settings.theme, settings.themeSeries, activeBook]);
 
   useEffect(() => {
     if (activeBook) {
@@ -2785,6 +2890,56 @@ function translateErrorMessage(message: string) {
 function clamp(value: number, min: number, max: number) {
   const upper = Math.max(min, max);
   return Math.min(Math.max(value, min), upper);
+}
+
+function readSavedWindowPlacement() {
+  try {
+    const raw = localStorage.getItem(windowPlacementStorageKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<SavedWindowPlacement>;
+    if (
+      typeof parsed.x !== "number" ||
+      typeof parsed.y !== "number" ||
+      typeof parsed.width !== "number" ||
+      typeof parsed.height !== "number" ||
+      parsed.width < minimumRestoredWindowSize ||
+      parsed.height < minimumRestoredWindowSize
+    ) {
+      return null;
+    }
+    return {
+      x: Math.round(parsed.x),
+      y: Math.round(parsed.y),
+      width: Math.round(parsed.width),
+      height: Math.round(parsed.height),
+      savedAt: typeof parsed.savedAt === "number" ? parsed.savedAt : Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeSavedWindowPlacement(placement: SavedWindowPlacement) {
+  localStorage.setItem(windowPlacementStorageKey, JSON.stringify(placement));
+}
+
+function isWindowPlacementVisible(
+  placement: SavedWindowPlacement,
+  monitors: Array<{ position: PhysicalPosition; workArea: { position: PhysicalPosition; size: PhysicalSize } }>,
+) {
+  return monitors.some((monitor) => {
+    const area = monitor.workArea;
+    const left = area.position.x;
+    const top = area.position.y;
+    const right = left + area.size.width;
+    const bottom = top + area.size.height;
+    return (
+      placement.x + minimumRestoredWindowSize > left &&
+      placement.x < right - minimumRestoredWindowSize &&
+      placement.y + minimumRestoredWindowSize > top &&
+      placement.y < bottom - minimumRestoredWindowSize
+    );
+  });
 }
 
 function sortReaderAnnotations(annotations: Annotation[]) {

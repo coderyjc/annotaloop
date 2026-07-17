@@ -1,7 +1,7 @@
 :root {
   color-scheme: light;
   font-family: "IBM Plex Sans", "Segoe UI", "Microsoft YaHei", sans-serif;
-  background: #eef0ea;
+  background: var(--app-root-bg, #eef0ea);
   color: #20211d;
   --ink: #20211d;
   --muted: #686b61;
@@ -40,6 +40,7 @@ body,
 #root {
   width: 100%;
   height: 100%;
+  background: var(--app-root-bg, #eef0ea);
   margin: 0;
 }
 
@@ -577,6 +578,9 @@ button:disabled {
   --drop-bg: color-mix(in srgb, #151c22 84%, var(--accent) 9%);
   --drop-bg-hover: color-mix(in srgb, #1b252c 70%, var(--accent) 18%);
   --drop-border: color-mix(in srgb, var(--accent) 46%, #344149);
+  --empty-bg: rgba(24, 32, 39, 0.82);
+  --empty-border: #45646a;
+  --empty-ink: #dcfffb;
   color-scheme: dark;
 }
 
@@ -608,6 +612,9 @@ button:disabled {
   --drop-bg: color-mix(in srgb, #111a16 84%, var(--accent) 9%);
   --drop-bg-hover: color-mix(in srgb, #17241e 70%, var(--accent) 18%);
   --drop-border: color-mix(in srgb, var(--accent) 46%, #284135);
+  --empty-bg: rgba(17, 26, 22, 0.82);
+  --empty-border: #3b6b52;
+  --empty-ink: #caffdb;
   color-scheme: dark;
 }
 
@@ -639,6 +646,9 @@ button:disabled {
   --drop-bg: color-mix(in srgb, #1b120a 84%, var(--accent) 9%);
   --drop-bg-hover: color-mix(in srgb, #24170d 70%, var(--accent) 18%);
   --drop-border: color-mix(in srgb, var(--accent) 46%, #513c26);
+  --empty-bg: rgba(29, 20, 12, 0.84);
+  --empty-border: #76552f;
+  --empty-ink: #ffdda1;
   color-scheme: dark;
 }
 
@@ -670,6 +680,9 @@ button:disabled {
   --drop-bg: color-mix(in srgb, #101827 84%, var(--accent) 9%);
   --drop-bg-hover: color-mix(in srgb, #172239 70%, var(--accent) 18%);
   --drop-border: color-mix(in srgb, var(--accent) 46%, #25394f);
+  --empty-bg: rgba(16, 25, 40, 0.82);
+  --empty-border: #3d6c7c;
+  --empty-ink: #d8fffb;
   color-scheme: dark;
 }
 
