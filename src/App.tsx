@@ -160,13 +160,29 @@ const windowPlacementStorageKey = "auroramd.windowPlacement.v1";
 const legacyWindowPlacementStorageKeys = ["annotaloop.windowPlacement.v1"];
 const windowPlacementSaveDelayMs = 320;
 const minimumRestoredWindowSize = 360;
+const initialWindowWidthRatio = 0.69;
+const initialWindowHeightRatio = 0.82;
+const initialWindowMinWidth = 980;
+const initialWindowMinHeight = 680;
+const initialWindowEdgePaddingPx = 32;
 
-interface SavedWindowPlacement {
+interface WindowPlacementBounds {
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+interface SavedWindowPlacement extends WindowPlacementBounds {
   savedAt: number;
+}
+
+interface WindowPlacementMonitor {
+  position: PhysicalPosition;
+  workArea: {
+    position: PhysicalPosition;
+    size: PhysicalSize;
+  };
 }
 
 function AppTitlebar({ title, subtitle }: { title: string; subtitle: string }) {
@@ -348,13 +364,26 @@ export default function App() {
     let restored = false;
     let saveTimer: number | null = null;
 
+    async function applyWindowPlacement(placement: WindowPlacementBounds) {
+      await appWindow.setSize(new PhysicalSize(placement.width, placement.height));
+      await appWindow.setPosition(new PhysicalPosition(placement.x, placement.y));
+    }
+
     async function restoreWindowPlacement() {
       const saved = readSavedWindowPlacement();
-      if (!saved) return;
       const monitors = await availableMonitors();
-      if (!isWindowPlacementVisible(saved, monitors)) return;
-      await appWindow.setSize(new PhysicalSize(saved.width, saved.height));
-      await appWindow.setPosition(new PhysicalPosition(saved.x, saved.y));
+      if (saved && isWindowPlacementVisible(saved, monitors)) {
+        await applyWindowPlacement(saved);
+        return;
+      }
+      if (saved) {
+        localStorage.removeItem(windowPlacementStorageKey);
+        legacyWindowPlacementStorageKeys.forEach((key) => localStorage.removeItem(key));
+      }
+      const monitor = monitors[0] ?? null;
+      const initialPlacement = getInitialWindowPlacement(monitor);
+      if (!initialPlacement) return;
+      await applyWindowPlacement(initialPlacement);
     }
 
     async function saveWindowPlacement() {
@@ -471,6 +500,10 @@ export default function App() {
     void getCurrentWebview()
       .onDragDropEvent((event) => {
         const payload = event.payload;
+        if (isHomeImportDragBlocked()) {
+          setImportDragActive(false);
+          return;
+        }
         if (payload.type === "enter" || payload.type === "over") {
           setImportDragActive(isImportDropPosition(payload.position));
           return;
@@ -2354,6 +2387,10 @@ export default function App() {
             book={versionManagerBook}
             onClose={closeVersionManagerModal}
             onError={setError}
+            onChanged={() => {
+              void refreshBooks();
+              void refreshNotes();
+            }}
           />
         )}
         {homeSettingsOpen && (
@@ -2911,6 +2948,29 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), upper);
 }
 
+function isHomeImportDragBlocked() {
+  return Boolean(document.querySelector(".modal-backdrop, .settings-backdrop"));
+}
+
+function getInitialWindowPlacement(monitor: WindowPlacementMonitor | null): WindowPlacementBounds | null {
+  if (!monitor) return null;
+  const area = monitor.workArea;
+  const usableWidth = Math.max(1, area.size.width);
+  const usableHeight = Math.max(1, area.size.height);
+  const maxWidth = Math.max(minimumRestoredWindowSize, usableWidth - initialWindowEdgePaddingPx * 2);
+  const maxHeight = Math.max(minimumRestoredWindowSize, usableHeight - initialWindowEdgePaddingPx * 2);
+  const minWidth = Math.min(initialWindowMinWidth, maxWidth);
+  const minHeight = Math.min(initialWindowMinHeight, maxHeight);
+  const width = Math.round(clamp(usableWidth * initialWindowWidthRatio, minWidth, maxWidth));
+  const height = Math.round(clamp(usableHeight * initialWindowHeightRatio, minHeight, maxHeight));
+  return {
+    x: Math.round(area.position.x + (usableWidth - width) / 2),
+    y: Math.round(area.position.y + (usableHeight - height) / 2),
+    width,
+    height,
+  };
+}
+
 function readSavedWindowPlacement() {
   try {
     const storageKey = [windowPlacementStorageKey, ...legacyWindowPlacementStorageKeys].find((key) =>
@@ -2949,7 +3009,7 @@ function writeSavedWindowPlacement(placement: SavedWindowPlacement) {
 
 function isWindowPlacementVisible(
   placement: SavedWindowPlacement,
-  monitors: Array<{ position: PhysicalPosition; workArea: { position: PhysicalPosition; size: PhysicalSize } }>,
+  monitors: WindowPlacementMonitor[],
 ) {
   return monitors.some((monitor) => {
     const area = monitor.workArea;

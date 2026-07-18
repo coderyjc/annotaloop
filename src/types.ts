@@ -202,6 +202,13 @@ export interface FolderSyncReport {
   messages: string[];
 }
 
+export interface ChapterUploadReport {
+  added: number;
+  skipped: number;
+  messages: string[];
+  chapters: Chapter[];
+}
+
 export interface BackupResult {
   path: string;
 }

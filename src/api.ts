@@ -9,6 +9,7 @@ import type {
   Book,
   BookSummary,
   Chapter,
+  ChapterUploadReport,
   ChapterVersion,
   ContentSearchResult,
   ExportPreset,
@@ -26,6 +27,10 @@ import type {
 
 export async function pickBookFolder() {
   return invoke<string | null>("pick_book_folder");
+}
+
+export async function pickMarkdownFiles() {
+  return invoke<string[]>("pick_markdown_files");
 }
 
 export async function importBookFolder(path: string) {
@@ -74,6 +79,14 @@ export async function listChapters(bookId: string) {
 
 export async function reorderChapters(bookId: string, chapterIdsInOrder: string[]) {
   return invoke<Chapter[]>("reorder_chapters", { bookId, chapterIdsInOrder });
+}
+
+export async function uploadChaptersToBook(bookId: string, filePaths: string[]) {
+  return invoke<ChapterUploadReport>("upload_chapters_to_book", { bookId, filePaths });
+}
+
+export async function deleteChapter(chapterId: string) {
+  return invoke<Chapter[]>("delete_chapter", { chapterId });
 }
 
 export async function readChapter(chapterId: string) {

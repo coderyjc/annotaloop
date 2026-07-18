@@ -1,14 +1,18 @@
-import { AlertTriangle, Archive, ArrowRight, BookOpen, Check, Copy, Database, Download, FileText, FolderOpen, GripVertical, Keyboard, MessageSquare, Palette, Pencil, Pin, PinOff, Plus, RefreshCw, Save, Search, Trash2, Type, X } from "lucide-react";
+import { AlertTriangle, Archive, ArrowRight, BookOpen, Check, Copy, Database, Download, FileText, FolderOpen, GripVertical, Keyboard, MessageSquare, Palette, Pencil, Pin, PinOff, Plus, RefreshCw, Save, Search, Trash2, Type, Upload, X } from "lucide-react";
 import { type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
+  deleteChapter,
   deleteChapterVersion,
   listChapterVersions,
   listChapters,
+  previewImportBookFolder,
   readChapterVersion,
   reorderChapters,
   searchBookContent,
   updateChapterVersionLabel,
+  uploadChaptersToBook,
 } from "../../api";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
 import {
   defaultShortcutBindings,
   getEffectiveThemeSeries,
@@ -24,6 +28,7 @@ import type {
   BackupResult,
   BookSummary,
   Chapter,
+  ChapterUploadReport,
   ChapterVersion,
   ContentSearchResult,
   ExportPreset,
@@ -481,6 +486,190 @@ export function ImportBookModal({
           >
             <Save size={16} /> 导入选中文件
           </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ChapterUploadModal({
+  book,
+  preview,
+  selectedFilePaths,
+  busy,
+  onSelectionChange,
+  onDropPaths,
+  onConfirm,
+  onClose,
+}: {
+  book: BookSummary;
+  preview: ImportBookPreview | null;
+  selectedFilePaths: string[];
+  busy: boolean;
+  onSelectionChange: (paths: string[]) => void;
+  onDropPaths: (paths: string[]) => void;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  const [dropActive, setDropActive] = useState(false);
+  const dropZoneRef = useRef<HTMLDivElement | null>(null);
+  const onDropPathsRef = useRef(onDropPaths);
+  const selectedSet = useMemo(() => new Set(selectedFilePaths), [selectedFilePaths]);
+  const tree = useMemo(() => (preview ? buildImportTree(preview.files) : null), [preview]);
+  const selectedCount = preview?.files.filter((file) => selectedSet.has(file.path)).length ?? 0;
+
+  const normalizeSelection = (nextSet: Set<string>) =>
+    preview ? preview.files.filter((file) => nextSet.has(file.path)).map((file) => file.path) : [];
+
+  const toggleFile = (path: string, checked: boolean) => {
+    const nextSet = new Set(selectedSet);
+    if (checked) {
+      nextSet.add(path);
+    } else {
+      nextSet.delete(path);
+    }
+    onSelectionChange(normalizeSelection(nextSet));
+  };
+
+  const toggleGroup = (paths: string[], checked: boolean) => {
+    const nextSet = new Set(selectedSet);
+    paths.forEach((path) => {
+      if (checked) {
+        nextSet.add(path);
+      } else {
+        nextSet.delete(path);
+      }
+    });
+    onSelectionChange(normalizeSelection(nextSet));
+  };
+
+  useEffect(() => {
+    onDropPathsRef.current = onDropPaths;
+  }, [onDropPaths]);
+
+  function isUploadDropPosition(position: { x: number; y: number }) {
+    const target = dropZoneRef.current;
+    if (!target) return false;
+    const rect = target.getBoundingClientRect();
+    const scale = window.devicePixelRatio || 1;
+    const x = position.x / scale;
+    const y = position.y / scale;
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  }
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let cancelled = false;
+    void getCurrentWebview()
+      .onDragDropEvent((event) => {
+        const payload = event.payload;
+        if (payload.type === "enter" || payload.type === "over") {
+          setDropActive(isUploadDropPosition(payload.position));
+          return;
+        }
+        if (payload.type === "leave") {
+          setDropActive(false);
+          return;
+        }
+        if (payload.type === "drop") {
+          const shouldUpload = isUploadDropPosition(payload.position);
+          setDropActive(false);
+          if (shouldUpload && payload.paths.length > 0) {
+            onDropPathsRef.current(payload.paths);
+          }
+        }
+      })
+      .then((nextUnlisten) => {
+        if (cancelled) {
+          nextUnlisten();
+        } else {
+          unlisten = nextUnlisten;
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, []);
+
+  return (
+    <div className="modal-backdrop nested-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section className="annotation-modal chapter-upload-modal" onMouseDown={(event) => event.stopPropagation()}>
+        <header>
+          <div>
+            <p className="eyebrow">Upload</p>
+            <h2>上传章节到《{book.name}》</h2>
+          </div>
+          <button className="icon-button" onClick={onClose} title="关闭">
+            <X size={18} />
+          </button>
+        </header>
+
+        {!preview ? (
+          <div
+            ref={dropZoneRef}
+            className={`chapter-upload-card ${dropActive ? "drag-active" : ""}`}
+          >
+            <span className="import-card-icon chapter-upload-card-icon">
+              <Upload size={23} />
+            </span>
+            <strong>上传 Markdown 章节</strong>
+            <span>拖入 .md 文件会直接上传；拖入文件夹后会显示文件树，再选择要上传的 Markdown 文件。</span>
+            <small>{busy ? "正在处理..." : "请把 Markdown 文件或文件夹拖入这个区域"}</small>
+          </div>
+        ) : (
+          <>
+            <div className="chapter-upload-source">
+              <small>来源文件夹</small>
+              <strong>{preview.rootPath}</strong>
+            </div>
+
+            <div className="import-tree-toolbar">
+              <span>
+                已选择 <strong>{selectedCount}</strong> / {preview.files.length} 个 Markdown 文件
+              </span>
+              <div>
+                <button onClick={() => onSelectionChange(preview.files.map((file) => file.path))}>
+                  <Check size={15} /> 全选
+                </button>
+                <button
+                  onClick={() => {
+                    const nextSet = new Set(preview.files.map((file) => file.path));
+                    selectedFilePaths.forEach((path) => nextSet.delete(path));
+                    onSelectionChange(normalizeSelection(nextSet));
+                  }}
+                >
+                  <RefreshCw size={15} /> 反选
+                </button>
+              </div>
+            </div>
+
+            <div className="import-file-tree" role="tree" aria-label="选择要上传的 Markdown 文件">
+              {tree && (
+                <ImportTreeRows
+                  nodes={tree.children}
+                  level={0}
+                  selectedSet={selectedSet}
+                  onToggleFile={toggleFile}
+                  onToggleGroup={toggleGroup}
+                />
+              )}
+            </div>
+          </>
+        )}
+
+        <div className="modal-actions">
+          <button onClick={onClose}>取消</button>
+          {preview && (
+            <button
+              className="primary-button"
+              onClick={onConfirm}
+              disabled={busy || selectedCount === 0}
+            >
+              <Upload size={16} /> 上传选中文件
+            </button>
+          )}
         </div>
       </section>
     </div>
@@ -1002,6 +1191,10 @@ function formatBytes(value: number) {
   if (value < 1024) return `${value} B`;
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
   return `${(value / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function isMarkdownPath(path: string) {
+  return path.toLowerCase().endsWith(".md");
 }
 
 function formatShortcutFromEvent(event: ReactKeyboardEvent) {
@@ -1557,11 +1750,13 @@ export function VersionManagerModal({
   book,
   onClose,
   onError,
+  onChanged,
 }: {
   closing: boolean;
   book: BookSummary;
   onClose: () => void;
   onError: (message: string) => void;
+  onChanged?: () => void | Promise<void>;
 }) {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [selectedChapterId, setSelectedChapterId] = useState("");
@@ -1574,6 +1769,11 @@ export function VersionManagerModal({
   const [dragChapterId, setDragChapterId] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [sidebarResizing, setSidebarResizing] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadPreview, setUploadPreview] = useState<ImportBookPreview | null>(null);
+  const [uploadSelectedFilePaths, setUploadSelectedFilePaths] = useState<string[]>([]);
+  const [chapterDeleteDraft, setChapterDeleteDraft] = useState<Chapter | null>(null);
+  const [managerNotice, setManagerNotice] = useState("");
   const managerRef = useRef<HTMLDivElement | null>(null);
   const chaptersRef = useRef<Chapter[]>([]);
   const dragChapterIdRef = useRef<string | null>(null);
@@ -1723,6 +1923,107 @@ export function VersionManagerModal({
     }
   }
 
+  function notifyChanged() {
+    if (!onChanged) return;
+    void Promise.resolve(onChanged()).catch((err) => onError(readError(err)));
+  }
+
+  function closeUploadModal() {
+    setUploadOpen(false);
+    setUploadPreview(null);
+    setUploadSelectedFilePaths([]);
+  }
+
+  function applyUploadReport(report: ChapterUploadReport) {
+    const previousChapters = chaptersRef.current;
+    const previousIds = new Set(previousChapters.map((chapter) => chapter.id));
+    const nextSelected =
+      report.chapters.find((chapter) => !previousIds.has(chapter.id)) ??
+      report.chapters.find((chapter) => chapter.id === selectedChapterId) ??
+      report.chapters[0] ??
+      null;
+
+    chaptersRef.current = report.chapters;
+    setChapters(report.chapters);
+    setSelectedChapterId(nextSelected?.id ?? "");
+    setDiffResult(null);
+    setManagerNotice(formatUploadNotice(report));
+    notifyChanged();
+  }
+
+  async function handleUploadDropPaths(paths: string[]) {
+    const uploadPaths = paths.map((path) => path.trim()).filter(Boolean);
+    if (uploadPaths.length === 0) return;
+    const markdownPaths = uploadPaths.filter(isMarkdownPath);
+    const folderCandidates = uploadPaths.filter((path) => !isMarkdownPath(path));
+    setBusy(true);
+    setManagerNotice("");
+    try {
+      if (folderCandidates.length === 0) {
+        const report = await uploadChaptersToBook(book.id, markdownPaths);
+        applyUploadReport(report);
+        closeUploadModal();
+        return;
+      }
+      if (uploadPaths.length === 1) {
+        const preview = await previewImportBookFolder(folderCandidates[0]);
+        setUploadPreview(preview);
+        setUploadSelectedFilePaths(preview.files.map((file) => file.path));
+        return;
+      }
+      onError("请拖入 Markdown 文件，或单个包含 Markdown 文件的文件夹。");
+    } catch (err) {
+      onError(readError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmUploadSelection() {
+    if (!uploadPreview || uploadSelectedFilePaths.length === 0) return;
+    setBusy(true);
+    setManagerNotice("");
+    try {
+      const report = await uploadChaptersToBook(book.id, uploadSelectedFilePaths);
+      applyUploadReport(report);
+      closeUploadModal();
+    } catch (err) {
+      onError(readError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function requestDeleteSelectedChapter() {
+    if (!selectedChapter) return;
+    setChapterDeleteDraft(selectedChapter);
+  }
+
+  async function confirmDeleteChapter() {
+    if (!chapterDeleteDraft) return;
+    const draft = chapterDeleteDraft;
+    setBusy(true);
+    setManagerNotice("");
+    try {
+      const previousChapters = chaptersRef.current;
+      const deletedIndex = Math.max(0, previousChapters.findIndex((chapter) => chapter.id === draft.id));
+      const nextChapters = await deleteChapter(draft.id);
+      const nextSelected = nextChapters[Math.min(deletedIndex, nextChapters.length - 1)] ?? null;
+      chaptersRef.current = nextChapters;
+      setChapters(nextChapters);
+      setSelectedChapterId(nextSelected?.id ?? "");
+      setVersions([]);
+      setDiffResult(null);
+      setChapterDeleteDraft(null);
+      setManagerNotice(`已删除章节“${chapterFileName(draft)}”，源文件仍保留在磁盘中。`);
+      notifyChanged();
+    } catch (err) {
+      onError(readError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   useEffect(() => {
     if (!dragChapterId) return;
 
@@ -1818,8 +2119,8 @@ export function VersionManagerModal({
       <section className="annotation-modal version-modal" onMouseDown={(event) => event.stopPropagation()}>
         <header>
           <div>
-            <p className="eyebrow">Versions</p>
-            <h2>{book.name} · 版本管理</h2>
+            <p className="eyebrow">Manage</p>
+            <h2>{book.name} · 管理</h2>
           </div>
           <button className="icon-button" onClick={onClose}>
             <X size={18} />
@@ -1865,8 +2166,36 @@ export function VersionManagerModal({
           <section>
             <div className="version-heading">
               <strong>{selectedChapter ? chapterFileName(selectedChapter) : "选择章节"}</strong>
-              {(busy || diffBusy) && <small>处理中...</small>}
+              <div className="version-heading-actions">
+                {managerNotice && <small>{managerNotice}</small>}
+                {(busy || diffBusy) && <small>处理中...</small>}
+                <button type="button" onClick={() => setUploadOpen(true)} disabled={busy}>
+                  <Upload size={15} /> 上传
+                </button>
+                <button
+                  type="button"
+                  className="danger"
+                  onClick={requestDeleteSelectedChapter}
+                  disabled={busy || !selectedChapter}
+                >
+                  <Trash2 size={15} /> 删除
+                </button>
+              </div>
             </div>
+            {chapterDeleteDraft && (
+              <div className="chapter-delete-confirm" role="alertdialog" aria-modal="false">
+                <div>
+                  <strong>删除章节“{chapterFileName(chapterDeleteDraft)}”？</strong>
+                  <small>会同步删除这个章节的所有版本、批注和阅读进度；不会删除磁盘上的 Markdown 源文件。</small>
+                </div>
+                <button type="button" onClick={() => setChapterDeleteDraft(null)} disabled={busy}>
+                  取消
+                </button>
+                <button type="button" className="danger" onClick={() => void confirmDeleteChapter()} disabled={busy}>
+                  确认删除
+                </button>
+              </div>
+            )}
             {versions.map((version) => {
               const isCurrent = selectedChapter?.currentVersionId === version.id;
               return (
@@ -1945,6 +2274,18 @@ export function VersionManagerModal({
           </section>
         </div>
       </section>
+      {uploadOpen && (
+        <ChapterUploadModal
+          book={book}
+          preview={uploadPreview}
+          selectedFilePaths={uploadSelectedFilePaths}
+          busy={busy}
+          onSelectionChange={setUploadSelectedFilePaths}
+          onDropPaths={(paths) => void handleUploadDropPaths(paths)}
+          onConfirm={() => void confirmUploadSelection()}
+          onClose={closeUploadModal}
+        />
+      )}
     </div>
   );
 }
@@ -2106,6 +2447,19 @@ function diffBlockLabel(type: DiffBlock["type"]) {
 function formatVersionLabel(version: ChapterVersion, currentVersionId?: string) {
   const base = version.id === currentVersionId ? `当前版本 v${version.versionNumber}` : `v${version.versionNumber}`;
   return version.label.trim() ? `${base} · ${version.label.trim()}` : base;
+}
+
+function formatUploadNotice(report: ChapterUploadReport) {
+  if (report.added > 0 && report.skipped > 0) {
+    return `已上传 ${report.added} 个章节，跳过 ${report.skipped} 个已存在文件。`;
+  }
+  if (report.added > 0) {
+    return `已上传 ${report.added} 个章节。`;
+  }
+  if (report.skipped > 0) {
+    return `没有新增章节，${report.skipped} 个文件已存在于这本书中。`;
+  }
+  return "没有新增章节。";
 }
 
 function VersionRow({

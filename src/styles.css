@@ -4620,6 +4620,78 @@ body.sorting-drag-active * {
   width: min(860px, calc(100vw - 44px));
 }
 
+.nested-modal-backdrop {
+  inset: var(--titlebar-height) 0 0;
+  z-index: 36;
+}
+
+.chapter-upload-modal {
+  width: min(820px, calc(100vw - 44px));
+}
+
+.chapter-upload-source {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--paper-strong) 74%, transparent);
+  padding: 10px 12px;
+  margin-top: 14px;
+}
+
+.chapter-upload-source small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.chapter-upload-source strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chapter-upload-card {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  border: 1px dashed var(--drop-border);
+  border-radius: 8px;
+  background: var(--drop-bg);
+  padding: 22px;
+  margin-top: 16px;
+}
+
+.chapter-upload-card:hover,
+.chapter-upload-card.drag-active {
+  border-color: var(--accent);
+  background: var(--drop-bg-hover);
+}
+
+.chapter-upload-card-icon {
+  width: 46px;
+  height: 46px;
+}
+
+.chapter-upload-card strong {
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.chapter-upload-card > span:not(.chapter-upload-card-icon) {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.chapter-upload-card small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 720;
+}
+
 .import-book-summary {
   display: grid;
   grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1.25fr);
@@ -5634,6 +5706,60 @@ body.version-sidebar-resize-active * {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   margin-bottom: 10px;
+}
+
+.version-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.version-heading-actions small {
+  max-width: 260px;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.version-heading-actions button,
+.chapter-delete-confirm button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-strong);
+  color: var(--ink);
+}
+
+.version-heading-actions .danger,
+.chapter-delete-confirm .danger {
+  border-color: #e2b8ad;
+  color: #a83221;
+}
+
+.chapter-delete-confirm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, #a83221 32%, var(--line));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--paper-strong) 84%, #a83221 7%);
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.chapter-delete-confirm div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chapter-delete-confirm small {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .version-row {

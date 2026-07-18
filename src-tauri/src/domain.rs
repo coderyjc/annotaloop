@@ -297,6 +297,15 @@ pub struct FolderSyncReport {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ChapterUploadReport {
+    pub added: i64,
+    pub skipped: i64,
+    pub messages: Vec<String>,
+    pub chapters: Vec<Chapter>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BackupResult {
     pub path: String,
 }

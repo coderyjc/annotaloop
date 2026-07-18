@@ -3,7 +3,7 @@ use std::collections::{BTreeSet, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use tauri::{Manager, State};
+use tauri::{Manager, PhysicalPosition, PhysicalSize, State};
 
 mod db;
 mod domain;
@@ -24,10 +24,18 @@ struct AppState {
     db_path: PathBuf,
 }
 
+const INITIAL_WINDOW_WIDTH_RATIO: f64 = 0.69;
+const INITIAL_WINDOW_HEIGHT_RATIO: f64 = 0.82;
+const INITIAL_WINDOW_MIN_WIDTH: u32 = 980;
+const INITIAL_WINDOW_MIN_HEIGHT: u32 = 680;
+const INITIAL_WINDOW_MIN_RESTORED_SIZE: u32 = 360;
+const INITIAL_WINDOW_EDGE_PADDING: u32 = 32;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
+            apply_initial_window_bounds(app);
             let app_data_dir = app.path().app_data_dir()?;
             fs::create_dir_all(&app_data_dir)?;
             let db_path = app_data_dir.join("auroramd.sqlite3");
@@ -41,6 +49,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             pick_book_folder,
+            pick_markdown_files,
             preview_import_book_folder,
             import_book_folder,
             import_book_selection,
@@ -53,6 +62,8 @@ pub fn run() {
             sync_book_folder,
             list_chapters,
             reorder_chapters,
+            upload_chapters_to_book,
+            delete_chapter,
             list_chapter_versions,
             update_chapter_version_label,
             delete_chapter_version,
@@ -81,6 +92,45 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("failed to run AuroraMD");
+}
+
+fn apply_initial_window_bounds(app: &tauri::App) {
+    let Some(window) = app.get_webview_window("main") else {
+        return;
+    };
+    let Ok(Some(monitor)) = window.primary_monitor() else {
+        return;
+    };
+    let area = monitor.work_area();
+    let usable_width = area.size.width.max(1);
+    let usable_height = area.size.height.max(1);
+    let max_width = INITIAL_WINDOW_MIN_RESTORED_SIZE
+        .max(usable_width.saturating_sub(INITIAL_WINDOW_EDGE_PADDING * 2));
+    let max_height = INITIAL_WINDOW_MIN_RESTORED_SIZE
+        .max(usable_height.saturating_sub(INITIAL_WINDOW_EDGE_PADDING * 2));
+    let min_width = INITIAL_WINDOW_MIN_WIDTH.min(max_width);
+    let min_height = INITIAL_WINDOW_MIN_HEIGHT.min(max_height);
+    let width = clamp_f64(
+        usable_width as f64 * INITIAL_WINDOW_WIDTH_RATIO,
+        min_width as f64,
+        max_width as f64,
+    )
+    .round() as u32;
+    let height = clamp_f64(
+        usable_height as f64 * INITIAL_WINDOW_HEIGHT_RATIO,
+        min_height as f64,
+        max_height as f64,
+    )
+    .round() as u32;
+    let x = area.position.x + (usable_width as i32 - width as i32) / 2;
+    let y = area.position.y + (usable_height as i32 - height as i32) / 2;
+    let _ = window.set_size(PhysicalSize::new(width, height));
+    let _ = window.set_position(PhysicalPosition::new(x, y));
+}
+
+fn clamp_f64(value: f64, min: f64, max: f64) -> f64 {
+    let upper = min.max(max);
+    value.max(min).min(upper)
 }
 
 fn migrate_legacy_database(app_data_dir: &Path, db_path: &Path) {
@@ -114,6 +164,7 @@ fn pick_book_folder() -> AppResult<Option<String>> {
         use std::os::windows::process::CommandExt;
 
         let script = r#"
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
 Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
 $dialog.Description = 'Select a Markdown book folder'
@@ -145,6 +196,60 @@ if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
     {
         Ok(None)
     }
+}
+
+#[tauri::command]
+fn pick_markdown_files() -> AppResult<Vec<String>> {
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+
+        let script = r#"
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding $false
+Add-Type -AssemblyName System.Windows.Forms
+$dialog = New-Object System.Windows.Forms.OpenFileDialog
+$dialog.Title = 'Select Markdown files'
+$dialog.Filter = 'Markdown files (*.md)|*.md'
+$dialog.Multiselect = $true
+if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+  [Console]::Out.Write((ConvertTo-Json -InputObject @($dialog.FileNames) -Compress))
+}
+"#;
+        let output = std::process::Command::new("powershell.exe")
+            .args(["-NoProfile", "-STA", "-Command", script])
+            .creation_flags(0x08000000)
+            .output()
+            .map_err(|error| format!("Failed to open Markdown file picker: {error}"))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Markdown file picker failed: {stderr}"));
+        }
+
+        let selected = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if selected.is_empty() {
+            return Ok(Vec::new());
+        }
+        parse_selected_path_list(&selected)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Ok(Vec::new())
+    }
+}
+
+fn parse_selected_path_list(raw: &str) -> AppResult<Vec<String>> {
+    let selected = raw.trim().trim_start_matches('\u{feff}');
+    if selected.is_empty() {
+        return Ok(Vec::new());
+    }
+    if let Ok(paths) = serde_json::from_str::<Vec<String>>(selected) {
+        return Ok(paths);
+    }
+    serde_json::from_str::<String>(selected)
+        .map(|path| vec![path])
+        .map_err(|error| format!("Failed to read selected Markdown files: {error}"))
 }
 
 fn open_folder_path(path: &PathBuf) -> AppResult<()> {
@@ -654,6 +759,152 @@ fn reorder_chapters(
     tx.commit()
         .map_err(|error| format!("Failed to save chapter order: {error}"))?;
 
+    load_chapters(&conn, &book_id)
+}
+
+fn upload_chapters_to_book_inner(
+    conn: &mut Connection,
+    book_id: &str,
+    file_paths: Vec<String>,
+) -> AppResult<ChapterUploadReport> {
+    if file_paths.is_empty() {
+        return Err("请选择至少一个 Markdown 文档。".to_string());
+    }
+
+    let book = get_book_by_id(conn, book_id)?;
+    let root_path = PathBuf::from(&book.root_path);
+    let chapters = load_chapters(conn, book_id)?;
+    let mut existing_paths = chapters
+        .iter()
+        .map(|chapter| chapter.file_path.clone())
+        .collect::<HashSet<_>>();
+    let mut seen_paths = HashSet::new();
+    let mut next_sort_index: i64 = conn
+        .query_row(
+            "SELECT COALESCE(MAX(sort_index), -1) + 1 FROM chapters WHERE book_id = ?1",
+            params![book_id],
+            |row| row.get(0),
+        )
+        .map_err(db_error)?;
+    let mut report = ChapterUploadReport {
+        added: 0,
+        skipped: 0,
+        messages: Vec::new(),
+        chapters: Vec::new(),
+    };
+    let timestamp = now();
+    let tx = conn
+        .transaction()
+        .map_err(|error| format!("Failed to start chapter upload: {error}"))?;
+
+    for file_path in file_paths {
+        let trimmed = file_path.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let canonical = PathBuf::from(trimmed)
+            .canonicalize()
+            .map_err(|error| format!("无法解析 Markdown 文档路径：{error}"))?;
+        let is_markdown = canonical
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .map(|extension| extension.eq_ignore_ascii_case("md"))
+            .unwrap_or(false);
+        if !canonical.is_file() || !is_markdown {
+            return Err("只能上传 Markdown 文档。".to_string());
+        }
+
+        let file_path_text = path_to_string(&canonical);
+        if !seen_paths.insert(file_path_text.clone()) || existing_paths.contains(&file_path_text) {
+            report.skipped += 1;
+            report
+                .messages
+                .push(format!("Skipped: {}", chapter_file_name_from_path(&file_path_text)));
+            continue;
+        }
+
+        let content = fs::read_to_string(&canonical)
+            .map_err(|error| format!("读取 Markdown 文档失败：{}：{error}", file_path_text))?;
+        let chapter_id = new_id();
+        let version_id = new_id();
+        let title = chapter_title_from_root(&root_path, &canonical, report.added as usize);
+        let content_hash = hash_content(&content);
+        tx.execute(
+            r#"
+            INSERT INTO chapters (
+                id, book_id, file_path, title, sort_index, current_version_id, is_missing, created_at, updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7, ?7)
+            "#,
+            params![
+                &chapter_id,
+                book_id,
+                &file_path_text,
+                &title,
+                next_sort_index,
+                &version_id,
+                &timestamp
+            ],
+        )
+        .map_err(|error| format!("Failed to upload chapter: {error}"))?;
+        tx.execute(
+            r#"
+            INSERT INTO chapter_versions (id, chapter_id, content_hash, version_number, content_snapshot, label, created_at)
+            VALUES (?1, ?2, ?3, 1, ?4, '', ?5)
+            "#,
+            params![&version_id, &chapter_id, &content_hash, &content, &timestamp],
+        )
+        .map_err(|error| format!("Failed to create uploaded chapter version: {error}"))?;
+        existing_paths.insert(file_path_text);
+        next_sort_index += 1;
+        report.added += 1;
+        report.messages.push(format!("Uploaded: {title}"));
+    }
+
+    if report.added > 0 {
+        tx.execute(
+            "UPDATE books SET updated_at = ?1 WHERE id = ?2",
+            params![now(), book_id],
+        )
+        .map_err(db_error)?;
+    }
+
+    tx.commit()
+        .map_err(|error| format!("Failed to save uploaded chapters: {error}"))?;
+    report.chapters = load_chapters(conn, book_id)?;
+    Ok(report)
+}
+
+#[tauri::command]
+fn upload_chapters_to_book(
+    book_id: String,
+    file_paths: Vec<String>,
+    state: State<AppState>,
+) -> AppResult<ChapterUploadReport> {
+    let mut conn = lock_conn(&state)?;
+    upload_chapters_to_book_inner(&mut conn, &book_id, file_paths)
+}
+
+#[tauri::command]
+fn delete_chapter(chapter_id: String, state: State<AppState>) -> AppResult<Vec<Chapter>> {
+    let mut conn = lock_conn(&state)?;
+    let chapter = get_chapter_by_id(&conn, &chapter_id)?;
+    let book_id = chapter.book_id.clone();
+    let tx = conn
+        .transaction()
+        .map_err(|error| format!("Failed to start chapter deletion: {error}"))?;
+    let changed = tx
+        .execute("DELETE FROM chapters WHERE id = ?1", params![chapter_id])
+        .map_err(|error| format!("Failed to delete chapter: {error}"))?;
+    if changed == 0 {
+        return Err("Chapter not found.".to_string());
+    }
+    tx.execute(
+        "UPDATE books SET updated_at = ?1 WHERE id = ?2",
+        params![now(), &book_id],
+    )
+    .map_err(db_error)?;
+    tx.commit()
+        .map_err(|error| format!("Failed to save chapter deletion: {error}"))?;
     load_chapters(&conn, &book_id)
 }
 
