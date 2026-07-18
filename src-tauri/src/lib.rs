@@ -30,7 +30,8 @@ pub fn run() {
         .setup(|app| {
             let app_data_dir = app.path().app_data_dir()?;
             fs::create_dir_all(&app_data_dir)?;
-            let db_path = app_data_dir.join("loop-book.sqlite3");
+            let db_path = app_data_dir.join("auroramd.sqlite3");
+            migrate_legacy_database(&app_data_dir, &db_path);
             let conn = init_database(&db_path)?;
             app.manage(AppState {
                 conn: Mutex::new(conn),
@@ -79,7 +80,31 @@ pub fn run() {
             get_latest_reading_progress
         ])
         .run(tauri::generate_context!())
-        .expect("failed to run AnnotaLoop");
+        .expect("failed to run AuroraMD");
+}
+
+fn migrate_legacy_database(app_data_dir: &Path, db_path: &Path) {
+    if db_path.exists() {
+        return;
+    }
+
+    let mut legacy_paths = vec![app_data_dir.join("loop-book.sqlite3")];
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(app_data_root) = std::env::var_os("APPDATA") {
+            let app_data_root = PathBuf::from(app_data_root);
+            legacy_paths.push(app_data_root.join("com.loopbook.desktop").join("loop-book.sqlite3"));
+            legacy_paths.push(app_data_root.join("AnnotaLoop").join("loop-book.sqlite3"));
+        }
+    }
+
+    for legacy_path in legacy_paths {
+        if legacy_path.exists() {
+            let _ = fs::copy(legacy_path, db_path);
+            break;
+        }
+    }
 }
 
 #[tauri::command]
@@ -162,12 +187,12 @@ fn pick_backup_save_path() -> AppResult<Option<PathBuf>> {
             .filter(|char| char.is_ascii_digit())
             .take(14)
             .collect::<String>();
-        let default_name = format!("annotaloop-backup-{timestamp}.sqlite3");
+        let default_name = format!("auroramd-backup-{timestamp}.sqlite3");
         let script = format!(
             r#"
 Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.SaveFileDialog
-$dialog.Title = 'Export AnnotaLoop backup'
+$dialog.Title = 'Export AuroraMD backup'
 $dialog.Filter = 'SQLite backup (*.sqlite3)|*.sqlite3|All files (*.*)|*.*'
 $dialog.FileName = '{}'
 if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{
@@ -206,7 +231,7 @@ fn pick_backup_open_path() -> AppResult<Option<PathBuf>> {
         let script = r#"
 Add-Type -AssemblyName System.Windows.Forms
 $dialog = New-Object System.Windows.Forms.OpenFileDialog
-$dialog.Title = 'Restore AnnotaLoop backup'
+$dialog.Title = 'Restore AuroraMD backup'
 $dialog.Filter = 'SQLite backup (*.sqlite3)|*.sqlite3|All files (*.*)|*.*'
 if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
   [Console]::Out.Write($dialog.FileName)

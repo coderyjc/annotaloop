@@ -1,12 +1,12 @@
 [package]
-name = "loop-book"
+name = "auroramd"
 version = "0.4.3"
 description = "A local-first Markdown reader for annotation loops."
-authors = ["AnnotaLoop"]
+authors = ["AuroraMD"]
 edition = "2021"
 
 [lib]
-name = "loop_book_lib"
+name = "auroramd_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "AnnotaLoop desktop permissions",
+  "description": "AuroraMD desktop permissions",
   "windows": ["main"],
   "permissions": [
     "core:default",

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "AnnotaLoop",
+  "productName": "AuroraMD",
   "version": "0.4.3",
-  "identifier": "com.loopbook.desktop",
+  "identifier": "com.auroramd.desktop",
   "build": {
     "beforeDevCommand": "npm.cmd run dev",
     "devUrl": "http://127.0.0.1:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "AnnotaLoop",
+        "title": "AuroraMD",
         "width": 1320,
         "height": 860,
         "minWidth": 980,

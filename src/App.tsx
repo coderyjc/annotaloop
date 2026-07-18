@@ -156,7 +156,8 @@ const fullscreenTopKeepPx = 126;
 const fullscreenSideKeepPaddingPx = 36;
 const fullscreenTopPollMs = 80;
 const fullscreenTopCursorPx = 8;
-const windowPlacementStorageKey = "annotaloop.windowPlacement.v1";
+const windowPlacementStorageKey = "auroramd.windowPlacement.v1";
+const legacyWindowPlacementStorageKeys = ["annotaloop.windowPlacement.v1"];
 const windowPlacementSaveDelayMs = 320;
 const minimumRestoredWindowSize = 360;
 
@@ -391,6 +392,7 @@ export default function App() {
     void restoreWindowPlacement()
       .catch(() => {
         localStorage.removeItem(windowPlacementStorageKey);
+        legacyWindowPlacementStorageKeys.forEach((key) => localStorage.removeItem(key));
       })
       .finally(() => {
         if (cancelled) return;
@@ -2185,12 +2187,12 @@ export default function App() {
         style={homeStyle}
         onContextMenu={suppressNativeContextMenu}
       >
-        <AppTitlebar title="AnnotaLoop" subtitle="首页" />
+        <AppTitlebar title="AuroraMD" subtitle="首页" />
         <TopNotice error={error} notice={notice} closing={topNoticeClosing} onClose={closeTopNotice} />
         <header className="home-header">
           <div>
             <p className="eyebrow">Local Markdown Annotation Studio</p>
-            <h1>AnnotaLoop</h1>
+            <h1>AuroraMD</h1>
             <p className="home-subtitle">把 AI 生成的 Markdown 文档读完、批注好，再导出成下一轮 AI 可以直接消化的材料。</p>
           </div>
           <div className="header-actions">
@@ -2435,7 +2437,7 @@ export default function App() {
       onMouseMove={handleReadingFullscreenPointerMove}
       onMouseLeave={hideReadingFullscreenChrome}
     >
-      <AppTitlebar title={activeBook.name} subtitle={reader?.chapter.title ?? "AnnotaLoop"} />
+      <AppTitlebar title={activeBook.name} subtitle={reader?.chapter.title ?? "AuroraMD"} />
       <TopNotice error={error} notice={notice} closing={topNoticeClosing} onClose={closeTopNotice} />
       {isReadingFullscreen && (
         <>
@@ -2911,7 +2913,11 @@ function clamp(value: number, min: number, max: number) {
 
 function readSavedWindowPlacement() {
   try {
-    const raw = localStorage.getItem(windowPlacementStorageKey);
+    const storageKey = [windowPlacementStorageKey, ...legacyWindowPlacementStorageKeys].find((key) =>
+      localStorage.getItem(key),
+    );
+    if (!storageKey) return null;
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<SavedWindowPlacement>;
     if (
@@ -2938,6 +2944,7 @@ function readSavedWindowPlacement() {
 
 function writeSavedWindowPlacement(placement: SavedWindowPlacement) {
   localStorage.setItem(windowPlacementStorageKey, JSON.stringify(placement));
+  legacyWindowPlacementStorageKeys.forEach((key) => localStorage.removeItem(key));
 }
 
 function isWindowPlacementVisible(
