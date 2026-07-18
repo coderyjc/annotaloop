@@ -41,6 +41,7 @@ import {
   getLatestReadingProgress,
   getSettings,
   importBookSelection,
+  listLaunchMarkdownPaths,
   listBooks,
   listChapters,
   listExportPresets,
@@ -48,6 +49,7 @@ import {
   listSystemFonts,
   markAnnotationsStatus,
   openBookFolder,
+  openMarkdownFile,
   pickBookFolder,
   previewImportBookFolder,
   readChapter,
@@ -241,6 +243,7 @@ function AppTitlebar({ title, subtitle }: { title: string; subtitle: string }) {
 
 function deriveImportBookName(preview: ImportBookPreview, filePaths: string[]) {
   if (filePaths.length === 1) {
+    if (preview.files.length === 1) return preview.defaultName;
     return preview.files.find((file) => file.path === filePaths[0])?.name ?? preview.defaultName;
   }
   return preview.defaultName;
@@ -885,18 +888,29 @@ export default function App() {
   async function boot() {
     setError("");
     try {
-      const [nextBooks, nextSettings, nextNotes, nextExportPresets, nextSystemFonts] = await Promise.all([
+      const [
+        nextBooks,
+        nextSettings,
+        nextNotes,
+        nextExportPresets,
+        nextSystemFonts,
+        launchMarkdownPaths,
+      ] = await Promise.all([
         listBooks(),
         getSettings(),
         listNoteItems(),
         listExportPresets(),
         listSystemFonts().catch(() => []),
+        listLaunchMarkdownPaths().catch(() => []),
       ]);
       setBooks(nextBooks);
       setSettings(nextSettings);
       setNotes(nextNotes);
       setExportPresets(nextExportPresets);
       setSystemFonts(nextSystemFonts);
+      if (launchMarkdownPaths[0]) {
+        await openLaunchMarkdownFile(launchMarkdownPaths[0], launchMarkdownPaths.length);
+      }
     } catch (err) {
       setError(readError(err));
     }
@@ -1002,7 +1016,26 @@ export default function App() {
     }
   }
 
-  async function openBook(book: ReaderBook) {
+  async function openLaunchMarkdownFile(path: string, pathCount: number) {
+    setError("");
+    setBusy(true);
+    try {
+      const opened = await openMarkdownFile(path);
+      const nextBooks = await listBooks();
+      setBooks(nextBooks);
+      const book = nextBooks.find((item) => item.id === opened.book.id) ?? opened.book;
+      if (pathCount > 1) {
+        setNotice("已打开第一个 Markdown 文件。");
+      }
+      await openBook(book, opened.targetChapterId);
+    } catch (err) {
+      setError(readError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openBook(book: ReaderBook, targetChapterId?: string) {
     setBusy(true);
     setError("");
     setExportText("");
@@ -1018,16 +1051,21 @@ export default function App() {
       if (!nextChapters.length) {
         throw new Error("这本书没有可读章节。");
       }
-      const progress = await getLatestReadingProgress(book.id);
       let nextReader: ReadChapterResponse;
-      if (progress) {
-        nextReader = await readChapterVersion(progress.chapterVersionId).catch(() =>
-          readChapter(progress.chapterId),
-        );
-        setPendingScroll(progress.scrollTop);
-      } else {
-        nextReader = await readChapter(nextChapters[0].id);
+      if (targetChapterId && nextChapters.some((chapter) => chapter.id === targetChapterId)) {
+        nextReader = await readChapter(targetChapterId);
         setPendingScroll(0);
+      } else {
+        const progress = await getLatestReadingProgress(book.id);
+        if (progress) {
+          nextReader = await readChapterVersion(progress.chapterVersionId).catch(() =>
+            readChapter(progress.chapterId),
+          );
+          setPendingScroll(progress.scrollTop);
+        } else {
+          nextReader = await readChapter(nextChapters[0].id);
+          setPendingScroll(0);
+        }
       }
       runViewTransition(() => {
         setActiveBook(book);

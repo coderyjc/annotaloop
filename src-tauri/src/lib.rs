@@ -15,8 +15,8 @@ use domain::*;
 use exporter::render_export;
 use utils::{
     chapter_file_name_from_path, chapter_title_from_root, collect_rows, db_error, extract_outline,
-    hash_content, new_id, now, path_to_string, repeat_placeholders, scan_markdown_files,
-    validate_annotation_status,
+    hash_content, is_markdown_path, new_id, now, path_to_string, repeat_placeholders,
+    scan_markdown_files, validate_annotation_status,
 };
 
 struct AppState {
@@ -50,6 +50,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             pick_book_folder,
             pick_markdown_files,
+            list_launch_markdown_paths,
+            open_markdown_file,
             preview_import_book_folder,
             import_book_folder,
             import_book_selection,
@@ -144,7 +146,11 @@ fn migrate_legacy_database(app_data_dir: &Path, db_path: &Path) {
     {
         if let Some(app_data_root) = std::env::var_os("APPDATA") {
             let app_data_root = PathBuf::from(app_data_root);
-            legacy_paths.push(app_data_root.join("com.loopbook.desktop").join("loop-book.sqlite3"));
+            legacy_paths.push(
+                app_data_root
+                    .join("com.loopbook.desktop")
+                    .join("loop-book.sqlite3"),
+            );
             legacy_paths.push(app_data_root.join("AnnotaLoop").join("loop-book.sqlite3"));
         }
     }
@@ -367,9 +373,65 @@ if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
 }
 
 #[tauri::command]
+fn list_launch_markdown_paths() -> Vec<String> {
+    std::env::args_os()
+        .skip(1)
+        .filter_map(|arg| resolve_markdown_file_path(&PathBuf::from(arg)).ok())
+        .map(|path| path_to_string(&path))
+        .collect()
+}
+
+#[tauri::command]
+fn open_markdown_file(path: String, state: State<AppState>) -> AppResult<OpenMarkdownFileResult> {
+    let file_path = resolve_markdown_file_path(&PathBuf::from(path.trim()))?;
+    let file_path_text = path_to_string(&file_path);
+
+    {
+        let mut conn = lock_conn(&state)?;
+        if let Some(mut book) = find_book_for_markdown_file(&conn, &file_path)? {
+            let chapters = load_chapters(&conn, &book.id)?;
+            if chapters
+                .iter()
+                .any(|chapter| chapter.file_path == file_path_text)
+            {
+                let target_chapter_id = chapter_id_for_file_path(&chapters, &file_path_text)?;
+                return Ok(OpenMarkdownFileResult {
+                    book,
+                    chapters,
+                    target_chapter_id,
+                });
+            }
+
+            let report =
+                upload_chapters_to_book_inner(&mut conn, &book.id, vec![file_path_text.clone()])?;
+            book = get_book_by_id(&conn, &book.id)?;
+            let target_chapter_id = chapter_id_for_file_path(&report.chapters, &file_path_text)?;
+            return Ok(OpenMarkdownFileResult {
+                book,
+                chapters: report.chapters,
+                target_chapter_id,
+            });
+        }
+    }
+
+    let root_path = markdown_file_root(&file_path)?;
+    let imported = import_book_from_files(
+        &state,
+        root_path,
+        markdown_book_name_from_path(&file_path),
+        vec![file_path],
+    )?;
+    let target_chapter_id = chapter_id_for_file_path(&imported.chapters, &file_path_text)?;
+    Ok(OpenMarkdownFileResult {
+        book: imported.book,
+        chapters: imported.chapters,
+        target_chapter_id,
+    })
+}
+
+#[tauri::command]
 fn preview_import_book_folder(path: String) -> AppResult<ImportBookPreview> {
-    let root_path = resolve_import_root(&path)?;
-    let md_files = scan_markdown_files(&root_path)?;
+    let (root_path, default_name, md_files) = resolve_import_preview_source(&path)?;
     if md_files.is_empty() {
         return Err("这个文件夹中没有找到 Markdown 文件。".to_string());
     }
@@ -401,7 +463,7 @@ fn preview_import_book_folder(path: String) -> AppResult<ImportBookPreview> {
         .collect();
 
     Ok(ImportBookPreview {
-        default_name: default_book_name_from_path(&root_path),
+        default_name,
         root_path: path_to_string(&root_path),
         files,
     })
@@ -438,11 +500,7 @@ fn import_book_selection(
         if !canonical.starts_with(&root_path) {
             return Err("只能导入所选文件夹内部的 Markdown 文件。".to_string());
         }
-        let is_markdown = canonical
-            .extension()
-            .and_then(|extension| extension.to_str())
-            .map(|extension| extension.eq_ignore_ascii_case("md"))
-            .unwrap_or(false);
+        let is_markdown = is_markdown_path(&canonical);
         if !canonical.is_file() || !is_markdown {
             return Err("只能导入 Markdown 文件。".to_string());
         }
@@ -467,6 +525,51 @@ fn resolve_import_root(path: &str) -> AppResult<PathBuf> {
         .map_err(|error| format!("无法解析文件夹路径：{error}"))
 }
 
+fn resolve_import_preview_source(path: &str) -> AppResult<(PathBuf, String, Vec<PathBuf>)> {
+    let source = PathBuf::from(path.trim());
+    let source = source
+        .canonicalize()
+        .map_err(|error| format!("无法解析导入路径：{error}"))?;
+
+    if source.is_dir() {
+        let md_files = scan_markdown_files(&source)?;
+        return Ok((
+            source.clone(),
+            default_book_name_from_path(&source),
+            md_files,
+        ));
+    }
+
+    if source.is_file() && is_markdown_path(&source) {
+        let root_path = markdown_file_root(&source)?;
+        return Ok((
+            root_path,
+            markdown_book_name_from_path(&source),
+            vec![source],
+        ));
+    }
+
+    Err("请选择 Markdown 文件或包含 Markdown 文件的文件夹。".to_string())
+}
+
+fn resolve_markdown_file_path(path: &Path) -> AppResult<PathBuf> {
+    let canonical = path
+        .canonicalize()
+        .map_err(|error| format!("无法解析 Markdown 文件路径：{error}"))?;
+    if canonical.is_file() && is_markdown_path(&canonical) {
+        Ok(canonical)
+    } else {
+        Err("请选择 Markdown 文件。".to_string())
+    }
+}
+
+fn markdown_file_root(path: &Path) -> AppResult<PathBuf> {
+    path.parent()
+        .ok_or_else(|| "无法识别 Markdown 文件所在文件夹。".to_string())?
+        .canonicalize()
+        .map_err(|error| format!("无法解析 Markdown 文件所在文件夹：{error}"))
+}
+
 fn default_book_name_from_path(path: &Path) -> String {
     path.file_name()
         .and_then(|name| name.to_str())
@@ -475,8 +578,19 @@ fn default_book_name_from_path(path: &Path) -> String {
         .to_string()
 }
 
+fn markdown_book_name_from_path(path: &Path) -> String {
+    path.file_stem()
+        .and_then(|name| name.to_str())
+        .filter(|name| !name.trim().is_empty())
+        .or_else(|| path.file_name().and_then(|name| name.to_str()))
+        .unwrap_or("Markdown")
+        .to_string()
+}
+
 fn import_book_name_from_input(input: &str) -> String {
-    let trimmed = input.trim().trim_matches(|character| character == '/' || character == '\\');
+    let trimmed = input
+        .trim()
+        .trim_matches(|character| character == '/' || character == '\\');
     trimmed
         .rsplit(|character| character == '/' || character == '\\')
         .find(|part| !part.trim().is_empty())
@@ -631,11 +745,7 @@ fn update_book_name(book_id: String, name: String, state: State<AppState>) -> Ap
 }
 
 #[tauri::command]
-fn update_book_pinned(
-    book_id: String,
-    is_pinned: bool,
-    state: State<AppState>,
-) -> AppResult<Book> {
+fn update_book_pinned(book_id: String, is_pinned: bool, state: State<AppState>) -> AppResult<Book> {
     let conn = lock_conn(&state)?;
     let changed = conn
         .execute(
@@ -805,11 +915,7 @@ fn upload_chapters_to_book_inner(
         let canonical = PathBuf::from(trimmed)
             .canonicalize()
             .map_err(|error| format!("无法解析 Markdown 文档路径：{error}"))?;
-        let is_markdown = canonical
-            .extension()
-            .and_then(|extension| extension.to_str())
-            .map(|extension| extension.eq_ignore_ascii_case("md"))
-            .unwrap_or(false);
+        let is_markdown = is_markdown_path(&canonical);
         if !canonical.is_file() || !is_markdown {
             return Err("只能上传 Markdown 文档。".to_string());
         }
@@ -817,9 +923,10 @@ fn upload_chapters_to_book_inner(
         let file_path_text = path_to_string(&canonical);
         if !seen_paths.insert(file_path_text.clone()) || existing_paths.contains(&file_path_text) {
             report.skipped += 1;
-            report
-                .messages
-                .push(format!("Skipped: {}", chapter_file_name_from_path(&file_path_text)));
+            report.messages.push(format!(
+                "Skipped: {}",
+                chapter_file_name_from_path(&file_path_text)
+            ));
             continue;
         }
 
@@ -937,10 +1044,7 @@ fn refresh_chapter_version(
 }
 
 #[tauri::command]
-fn create_annotation(
-    payload: AnnotationPayload,
-    state: State<AppState>,
-) -> AppResult<Annotation> {
+fn create_annotation(payload: AnnotationPayload, state: State<AppState>) -> AppResult<Annotation> {
     let conn = lock_conn(&state)?;
     let id = new_id();
     let now = now();
@@ -1027,8 +1131,11 @@ fn update_annotation(
 #[tauri::command]
 fn delete_annotation(annotation_id: String, state: State<AppState>) -> AppResult<()> {
     let conn = lock_conn(&state)?;
-    conn.execute("DELETE FROM annotations WHERE id = ?1", params![annotation_id])
-        .map_err(|error| format!("Failed to delete annotation: {error}"))?;
+    conn.execute(
+        "DELETE FROM annotations WHERE id = ?1",
+        params![annotation_id],
+    )
+    .map_err(|error| format!("Failed to delete annotation: {error}"))?;
     Ok(())
 }
 
@@ -1061,10 +1168,7 @@ fn mark_annotations_status(
 }
 
 #[tauri::command]
-fn list_annotations(
-    scope: AnnotationScope,
-    state: State<AppState>,
-) -> AppResult<Vec<Annotation>> {
+fn list_annotations(scope: AnnotationScope, state: State<AppState>) -> AppResult<Vec<Annotation>> {
     let conn = lock_conn(&state)?;
     load_annotations(&conn, &scope)
 }
@@ -1172,8 +1276,10 @@ fn search_book_content(
             };
             let lower_start = search_from + relative_index;
             let lower_end = lower_start + query_lower.len();
-            let original_start = original_byte_from_lower(&lower_to_original, lower_start, content.len());
-            let original_end = original_byte_from_lower(&lower_to_original, lower_end, content.len());
+            let original_start =
+                original_byte_from_lower(&lower_to_original, lower_start, content.len());
+            let original_end =
+                original_byte_from_lower(&lower_to_original, lower_end, content.len());
             if original_start <= original_end
                 && original_end <= content.len()
                 && content.is_char_boundary(original_start)
@@ -1219,9 +1325,7 @@ fn list_export_presets(state: State<AppState>) -> AppResult<Vec<ExportPreset>> {
             "#,
         )
         .map_err(db_error)?;
-    let rows = stmt
-        .query_map([], map_export_preset)
-        .map_err(db_error)?;
+    let rows = stmt.query_map([], map_export_preset).map_err(db_error)?;
     collect_rows(rows)
 }
 
@@ -1297,8 +1401,11 @@ fn update_export_preset(
 #[tauri::command]
 fn delete_export_preset(preset_id: String, state: State<AppState>) -> AppResult<()> {
     let conn = lock_conn(&state)?;
-    conn.execute("DELETE FROM export_presets WHERE id = ?1", params![preset_id])
-        .map_err(|error| format!("Failed to delete export preset: {error}"))?;
+    conn.execute(
+        "DELETE FROM export_presets WHERE id = ?1",
+        params![preset_id],
+    )
+    .map_err(|error| format!("Failed to delete export preset: {error}"))?;
     Ok(())
 }
 
@@ -1364,8 +1471,11 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
     }
 
     let conn = lock_conn(&state)?;
-    conn.execute("ATTACH DATABASE ?1 AS backup", params![path_to_string(&source_path)])
-        .map_err(|error| format!("Failed to open backup database: {error}"))?;
+    conn.execute(
+        "ATTACH DATABASE ?1 AS backup",
+        params![path_to_string(&source_path)],
+    )
+    .map_err(|error| format!("Failed to open backup database: {error}"))?;
     let restore_result = conn.execute_batch(
         r#"
         PRAGMA foreign_keys = OFF;
@@ -1441,11 +1551,10 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
     } else {
         Ok(())
     };
-    let focus_mode_restore_result = if restore_result.is_ok()
-        && backup_has_column(&conn, "settings", "focus_mode")?
-    {
-        conn.execute_batch(
-            r#"
+    let focus_mode_restore_result =
+        if restore_result.is_ok() && backup_has_column(&conn, "settings", "focus_mode")? {
+            conn.execute_batch(
+                r#"
             UPDATE settings
             SET focus_mode = (
                 SELECT focus_mode
@@ -1458,15 +1567,14 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
                 WHERE backup.settings.id = settings.id
             );
             "#,
-        )
-    } else {
-        Ok(())
-    };
-    let theme_series_restore_result = if restore_result.is_ok()
-        && backup_has_column(&conn, "settings", "theme_series")?
-    {
-        conn.execute_batch(
-            r#"
+            )
+        } else {
+            Ok(())
+        };
+    let theme_series_restore_result =
+        if restore_result.is_ok() && backup_has_column(&conn, "settings", "theme_series")? {
+            conn.execute_batch(
+                r#"
             UPDATE settings
             SET theme_series = (
                 SELECT theme_series
@@ -1479,10 +1587,10 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
                 WHERE backup.settings.id = settings.id
             );
             "#,
-        )
-    } else {
-        Ok(())
-    };
+            )
+        } else {
+            Ok(())
+        };
     let split_font_restore_result = if restore_result.is_ok()
         && backup_has_column(&conn, "settings", "interface_font_family")?
         && backup_has_column(&conn, "settings", "reader_font_family")?
@@ -1524,11 +1632,10 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
     } else {
         Ok(())
     };
-    let pinned_restore_result = if restore_result.is_ok()
-        && backup_has_column(&conn, "books", "is_pinned")?
-    {
-        conn.execute_batch(
-            r#"
+    let pinned_restore_result =
+        if restore_result.is_ok() && backup_has_column(&conn, "books", "is_pinned")? {
+            conn.execute_batch(
+                r#"
             UPDATE books
             SET is_pinned = (
                 SELECT is_pinned
@@ -1541,15 +1648,14 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
                 WHERE backup.books.id = books.id
             );
             "#,
-        )
-    } else {
-        Ok(())
-    };
-    let annotation_pinned_restore_result = if restore_result.is_ok()
-        && backup_has_column(&conn, "annotations", "is_pinned")?
-    {
-        conn.execute_batch(
-            r#"
+            )
+        } else {
+            Ok(())
+        };
+    let annotation_pinned_restore_result =
+        if restore_result.is_ok() && backup_has_column(&conn, "annotations", "is_pinned")? {
+            conn.execute_batch(
+                r#"
             UPDATE annotations
             SET is_pinned = (
                 SELECT is_pinned
@@ -1562,13 +1668,14 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
                 WHERE backup.annotations.id = annotations.id
             );
             "#,
-        )
-    } else {
-        Ok(())
-    };
-    let preset_restore_result = if restore_result.is_ok() && backup_has_table(&conn, "export_presets")? {
-        conn.execute_batch(
-            r#"
+            )
+        } else {
+            Ok(())
+        };
+    let preset_restore_result =
+        if restore_result.is_ok() && backup_has_table(&conn, "export_presets")? {
+            conn.execute_batch(
+                r#"
             INSERT INTO export_presets (
                 id, name, base_template_id, system_prompt, task_prompt, created_at, updated_at
             )
@@ -1576,10 +1683,10 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
                 id, name, base_template_id, system_prompt, task_prompt, created_at, updated_at
             FROM backup.export_presets;
             "#,
-        )
-    } else {
-        Ok(())
-    };
+            )
+        } else {
+            Ok(())
+        };
     let detach_result = conn.execute_batch("DETACH DATABASE backup;");
     restore_result.map_err(|error| format!("Failed to restore backup: {error}"))?;
     rendered_anchor_restore_result
@@ -1590,8 +1697,7 @@ fn restore_backup(state: State<AppState>) -> AppResult<BackupResult> {
         .map_err(|error| format!("Failed to restore theme series setting: {error}"))?;
     split_font_restore_result
         .map_err(|error| format!("Failed to restore font settings: {error}"))?;
-    pinned_restore_result
-        .map_err(|error| format!("Failed to restore pinned books: {error}"))?;
+    pinned_restore_result.map_err(|error| format!("Failed to restore pinned books: {error}"))?;
     annotation_pinned_restore_result
         .map_err(|error| format!("Failed to restore pinned annotations: {error}"))?;
     preset_restore_result.map_err(|error| format!("Failed to restore export presets: {error}"))?;
@@ -1816,10 +1922,7 @@ fn build_search_excerpt(content: &str, start_byte: usize, end_byte: usize) -> St
 }
 
 fn collapse_excerpt_whitespace(value: &str) -> String {
-    value
-        .split_whitespace()
-        .collect::<Vec<_>>()
-        .join(" ")
+    value.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 fn sync_book_folder_inner(conn: &mut Connection, book_id: &str) -> AppResult<FolderSyncReport> {
@@ -1866,9 +1969,10 @@ fn sync_book_folder_inner(conn: &mut Connection, book_id: &str) -> AppResult<Fol
             if hash_content(&content) != before_version.content_hash {
                 ensure_current_chapter_version(conn, &chapter.id)?;
                 report.changed += 1;
-                report
-                    .messages
-                    .push(format!("Changed: {}", chapter_file_name_from_path(&chapter.file_path)));
+                report.messages.push(format!(
+                    "Changed: {}",
+                    chapter_file_name_from_path(&chapter.file_path)
+                ));
             } else {
                 report.unchanged += 1;
             }
@@ -1909,9 +2013,10 @@ fn sync_book_folder_inner(conn: &mut Connection, book_id: &str) -> AppResult<Fol
             )
             .map_err(db_error)?;
             report.missing += 1;
-            report
-                .messages
-                .push(format!("Missing: {}", chapter_file_name_from_path(&chapter.file_path)));
+            report.messages.push(format!(
+                "Missing: {}",
+                chapter_file_name_from_path(&chapter.file_path)
+            ));
         }
     }
 
@@ -2065,6 +2170,53 @@ fn get_book_by_root_path(conn: &Connection, root_path: &str) -> AppResult<Option
     .map_err(db_error)
 }
 
+fn find_book_for_markdown_file(conn: &Connection, file_path: &Path) -> AppResult<Option<Book>> {
+    let file_path_text = path_to_string(file_path);
+    if let Some(book) = conn
+        .query_row(
+            r#"
+            SELECT b.id, b.name, b.root_path, b.view_mode, b.is_pinned, b.created_at, b.updated_at
+            FROM books b
+            INNER JOIN chapters c ON c.book_id = b.id
+            WHERE c.file_path = ?1
+            LIMIT 1
+            "#,
+            params![file_path_text],
+            map_book,
+        )
+        .optional()
+        .map_err(db_error)?
+    {
+        return Ok(Some(book));
+    }
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, name, root_path, view_mode, is_pinned, created_at, updated_at FROM books",
+        )
+        .map_err(db_error)?;
+    let rows = stmt.query_map([], map_book).map_err(db_error)?;
+    let books = collect_rows(rows)?;
+    let mut best_match: Option<(usize, Book)> = None;
+
+    for book in books {
+        let root_path = PathBuf::from(&book.root_path);
+        if !file_path.starts_with(&root_path) {
+            continue;
+        }
+        let depth = root_path.components().count();
+        if best_match
+            .as_ref()
+            .map(|(best_depth, _)| depth > *best_depth)
+            .unwrap_or(true)
+        {
+            best_match = Some((depth, book));
+        }
+    }
+
+    Ok(best_match.map(|(_, book)| book))
+}
+
 fn get_book_by_id(conn: &Connection, book_id: &str) -> AppResult<Book> {
     conn.query_row(
         "SELECT id, name, root_path, view_mode, is_pinned, created_at, updated_at FROM books WHERE id = ?1",
@@ -2102,6 +2254,14 @@ fn load_chapters(conn: &Connection, book_id: &str) -> AppResult<Vec<Chapter>> {
         .query_map(params![book_id], map_chapter)
         .map_err(db_error)?;
     collect_rows(rows)
+}
+
+fn chapter_id_for_file_path(chapters: &[Chapter], file_path: &str) -> AppResult<String> {
+    chapters
+        .iter()
+        .find(|chapter| chapter.file_path == file_path)
+        .map(|chapter| chapter.id.clone())
+        .ok_or_else(|| "无法定位打开的 Markdown 章节。".to_string())
 }
 
 fn get_chapter_version_by_id(
@@ -2212,7 +2372,10 @@ fn load_annotations(conn: &Connection, scope: &AnnotationScope) -> AppResult<Vec
     }
 }
 
-fn query_annotations_by_ids(conn: &Connection, annotation_ids: &[String]) -> AppResult<Vec<Annotation>> {
+fn query_annotations_by_ids(
+    conn: &Connection,
+    annotation_ids: &[String],
+) -> AppResult<Vec<Annotation>> {
     if annotation_ids.is_empty() {
         return Ok(Vec::new());
     }
@@ -2246,16 +2409,15 @@ fn query_annotations_by_ids(conn: &Connection, annotation_ids: &[String]) -> App
     );
     let mut stmt = conn.prepare(&sql).map_err(db_error)?;
     let rows = stmt
-        .query_map(rusqlite::params_from_iter(annotation_ids.iter()), map_annotation)
+        .query_map(
+            rusqlite::params_from_iter(annotation_ids.iter()),
+            map_annotation,
+        )
         .map_err(db_error)?;
     collect_rows(rows)
 }
 
-fn query_annotations<P>(
-    conn: &Connection,
-    suffix: &str,
-    params: P,
-) -> AppResult<Vec<Annotation>>
+fn query_annotations<P>(conn: &Connection, suffix: &str, params: P) -> AppResult<Vec<Annotation>>
 where
     P: rusqlite::Params,
 {
@@ -2328,7 +2490,10 @@ fn load_export_rows(conn: &Connection, scope: &AnnotationScope) -> AppResult<Vec
         );
         let mut stmt = conn.prepare(&sql).map_err(db_error)?;
         let rows = stmt
-            .query_map(rusqlite::params_from_iter(annotation_ids.iter()), map_export_row)
+            .query_map(
+                rusqlite::params_from_iter(annotation_ids.iter()),
+                map_export_row,
+            )
             .map_err(db_error)?;
         return collect_rows(rows);
     }
@@ -2336,11 +2501,20 @@ fn load_export_rows(conn: &Connection, scope: &AnnotationScope) -> AppResult<Vec
     let (where_clause, bind_value) = if let Some(version_id) = &scope.chapter_version_id {
         ("a.chapter_version_id = ?1".to_string(), version_id.clone())
     } else if let Some(chapter_id) = &scope.chapter_id {
-        ("a.chapter_id = ?1 AND a.chapter_version_id = c.current_version_id".to_string(), chapter_id.clone())
+        (
+            "a.chapter_id = ?1 AND a.chapter_version_id = c.current_version_id".to_string(),
+            chapter_id.clone(),
+        )
     } else if let Some(book_id) = &scope.book_id {
-        ("a.book_id = ?1 AND a.chapter_version_id = c.current_version_id".to_string(), book_id.clone())
+        (
+            "a.book_id = ?1 AND a.chapter_version_id = c.current_version_id".to_string(),
+            book_id.clone(),
+        )
     } else {
-        ("a.chapter_version_id = c.current_version_id".to_string(), String::new())
+        (
+            "a.chapter_version_id = c.current_version_id".to_string(),
+            String::new(),
+        )
     };
 
     let sql = format!(
@@ -2375,7 +2549,11 @@ fn load_export_rows(conn: &Connection, scope: &AnnotationScope) -> AppResult<Vec
     );
 
     let mut stmt = conn.prepare(&sql).map_err(db_error)?;
-    let rows = if bind_value.is_empty() && scope.book_id.is_none() && scope.chapter_id.is_none() && scope.chapter_version_id.is_none() {
+    let rows = if bind_value.is_empty()
+        && scope.book_id.is_none()
+        && scope.chapter_id.is_none()
+        && scope.chapter_version_id.is_none()
+    {
         stmt.query_map([], map_export_row).map_err(db_error)?
     } else {
         stmt.query_map(params![bind_value], map_export_row)

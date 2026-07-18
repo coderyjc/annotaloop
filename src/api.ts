@@ -20,6 +20,7 @@ import type {
   ImportBookPayload,
   ImportBookPreview,
   NoteItem,
+  OpenMarkdownFileResult,
   ReadChapterResponse,
   ReadingProgress,
   SystemFont,
@@ -31,6 +32,14 @@ export async function pickBookFolder() {
 
 export async function pickMarkdownFiles() {
   return invoke<string[]>("pick_markdown_files");
+}
+
+export async function listLaunchMarkdownPaths() {
+  return invoke<string[]>("list_launch_markdown_paths");
+}
+
+export async function openMarkdownFile(path: string) {
+  return invoke<OpenMarkdownFileResult>("open_markdown_file", { path });
 }
 
 export async function importBookFolder(path: string) {

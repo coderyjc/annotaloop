@@ -121,6 +121,12 @@ export interface ImportBookPayload {
   filePaths: string[];
 }
 
+export interface OpenMarkdownFileResult {
+  book: Book;
+  chapters: Chapter[];
+  targetChapterId: string;
+}
+
 export interface AppSettings {
   annotationContextChars: number;
   themeSeries: string;

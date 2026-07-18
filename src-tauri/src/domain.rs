@@ -127,6 +127,14 @@ pub struct BookWithChapters {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct OpenMarkdownFileResult {
+    pub book: Book,
+    pub chapters: Vec<Chapter>,
+    pub target_chapter_id: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImportPreviewFile {
     pub path: String,
     pub relative_path: String,

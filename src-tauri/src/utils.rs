@@ -43,20 +43,14 @@ pub fn scan_markdown_files(root_path: &Path) -> AppResult<Vec<PathBuf>> {
 }
 
 fn scan_markdown_files_inner(folder_path: &Path, md_files: &mut Vec<PathBuf>) -> AppResult<()> {
-    let entries =
-        fs::read_dir(folder_path).map_err(|error| format!("Failed to read book folder: {error}"))?;
+    let entries = fs::read_dir(folder_path)
+        .map_err(|error| format!("Failed to read book folder: {error}"))?;
     for entry in entries {
         let entry = entry.map_err(|error| format!("Failed to read folder entry: {error}"))?;
         let entry_path = entry.path();
         if entry_path.is_dir() {
             scan_markdown_files_inner(&entry_path, md_files)?;
-        } else if entry_path.is_file()
-            && entry_path
-                .extension()
-                .and_then(|extension| extension.to_str())
-                .map(|extension| extension.eq_ignore_ascii_case("md"))
-                .unwrap_or(false)
-        {
+        } else if entry_path.is_file() && is_markdown_path(&entry_path) {
             md_files.push(
                 entry_path
                     .canonicalize()
@@ -67,11 +61,24 @@ fn scan_markdown_files_inner(folder_path: &Path, md_files: &mut Vec<PathBuf>) ->
     Ok(())
 }
 
+pub fn is_markdown_path(path: &Path) -> bool {
+    path.extension()
+        .and_then(|extension| extension.to_str())
+        .map(|extension| {
+            extension.eq_ignore_ascii_case("md") || extension.eq_ignore_ascii_case("markdown")
+        })
+        .unwrap_or(false)
+}
+
 pub fn chapter_title_from_path(path: &Path, index: usize) -> String {
     path.file_name()
         .and_then(|name| name.to_str())
         .map(str::to_string)
-        .or_else(|| path.file_stem().and_then(|stem| stem.to_str()).map(str::to_string))
+        .or_else(|| {
+            path.file_stem()
+                .and_then(|stem| stem.to_str())
+                .map(str::to_string)
+        })
         .unwrap_or_else(|| format!("Chapter {}", index + 1))
 }
 
