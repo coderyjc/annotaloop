@@ -78,6 +78,10 @@ export async function openBookFolder(bookId: string) {
   return invoke<void>("open_book_folder", { bookId });
 }
 
+export async function openChapterInExplorer(chapterId: string) {
+  return invoke<void>("open_chapter_in_explorer", { chapterId });
+}
+
 export async function syncBookFolder(bookId: string) {
   return invoke<FolderSyncReport>("sync_book_folder", { bookId });
 }
@@ -104,6 +108,10 @@ export async function readChapter(chapterId: string) {
 
 export async function readChapterVersion(chapterVersionId: string) {
   return invoke<ReadChapterResponse>("read_chapter_version", { chapterVersionId });
+}
+
+export async function refreshChapterVersion(chapterId: string) {
+  return invoke<ChapterVersion>("refresh_chapter_version", { chapterId });
 }
 
 export async function listChapterVersions(chapterId: string) {

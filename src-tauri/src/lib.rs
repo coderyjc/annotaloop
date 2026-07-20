@@ -61,6 +61,7 @@ pub fn run() {
             update_book_pinned,
             delete_book,
             open_book_folder,
+            open_chapter_in_explorer,
             sync_book_folder,
             list_chapters,
             reorder_chapters,
@@ -286,6 +287,46 @@ fn open_folder_path(path: &PathBuf) -> AppResult<()> {
             .arg(path)
             .spawn()
             .map_err(|error| format!("Failed to open folder: {error}"))?;
+        Ok(())
+    }
+}
+
+fn open_file_location(path: &PathBuf) -> AppResult<()> {
+    if !path.is_file() {
+        return Err("Chapter source file no longer exists.".to_string());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+
+        std::process::Command::new("explorer.exe")
+            .arg(format!("/select,{}", path.to_string_lossy()))
+            .creation_flags(0x08000000)
+            .spawn()
+            .map_err(|error| format!("Failed to open chapter in Explorer: {error}"))?;
+        return Ok(());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg("-R")
+            .arg(path)
+            .spawn()
+            .map_err(|error| format!("Failed to open chapter file: {error}"))?;
+        return Ok(());
+    }
+
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+    {
+        let parent = path
+            .parent()
+            .ok_or_else(|| "Chapter source folder no longer exists.".to_string())?;
+        std::process::Command::new("xdg-open")
+            .arg(parent)
+            .spawn()
+            .map_err(|error| format!("Failed to open chapter folder: {error}"))?;
         Ok(())
     }
 }
@@ -788,6 +829,15 @@ fn open_book_folder(book_id: String, state: State<AppState>) -> AppResult<()> {
 }
 
 #[tauri::command]
+fn open_chapter_in_explorer(chapter_id: String, state: State<AppState>) -> AppResult<()> {
+    let conn = lock_conn(&state)?;
+    let chapter = get_chapter_by_id(&conn, &chapter_id)?;
+    drop(conn);
+
+    open_file_location(&PathBuf::from(&chapter.file_path))
+}
+
+#[tauri::command]
 fn sync_book_folder(book_id: String, state: State<AppState>) -> AppResult<FolderSyncReport> {
     let mut conn = lock_conn(&state)?;
     sync_book_folder_inner(&mut conn, &book_id)
@@ -1038,6 +1088,10 @@ fn refresh_chapter_version(
     state: State<AppState>,
 ) -> AppResult<ChapterVersion> {
     let mut conn = lock_conn(&state)?;
+    let chapter = get_chapter_by_id(&conn, &chapter_id)?;
+    if !PathBuf::from(&chapter.file_path).is_file() {
+        return Err("Chapter source file no longer exists.".to_string());
+    }
     ensure_current_chapter_version(&mut conn, &chapter_id)?;
     let chapter = get_chapter_by_id(&conn, &chapter_id)?;
     get_chapter_version_by_id(&conn, &chapter.current_version_id)

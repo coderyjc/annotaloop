@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  BookOpen,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -12,6 +11,10 @@ import {
   MessageSquare,
   Minimize2,
   Minus,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
   Search,
   Settings,
   Square,
@@ -36,6 +39,7 @@ import {
   createExportPreset,
   deleteAnnotation,
   deleteBook,
+  deleteChapter,
   deleteExportPreset,
   exportAnnotations,
   exportBackup,
@@ -50,11 +54,13 @@ import {
   listSystemFonts,
   markAnnotationsStatus,
   openBookFolder,
+  openChapterInExplorer,
   openMarkdownFile,
   pickBookFolder,
   previewImportBookFolder,
   readChapter,
   readChapterVersion,
+  refreshChapterVersion,
   reorderChapters,
   restoreBackup,
   saveReadingProgress,
@@ -84,6 +90,8 @@ import {
   AnnotationCard,
   AnnotationContextMenu,
   AnnotationDetailModal,
+  ChapterContextMenu,
+  DeleteChapterModal,
   ExportModal,
   NewAnnotationModal,
   SettingsPanel,
@@ -133,6 +141,7 @@ interface ContextMenuState {
 }
 
 type AnnotationMenuState = ContextMenuState & { annotation: Annotation };
+type ChapterMenuState = ContextMenuState & { chapter: Chapter };
 type ReaderBook = Book | BookSummary;
 
 interface ReaderSearchMatch {
@@ -307,6 +316,10 @@ export default function App() {
   const [contextMenuClosing, setContextMenuClosing] = useState(false);
   const [annotationMenu, setAnnotationMenu] = useState<AnnotationMenuState | null>(null);
   const [annotationMenuClosing, setAnnotationMenuClosing] = useState(false);
+  const [chapterMenu, setChapterMenu] = useState<ChapterMenuState | null>(null);
+  const [chapterMenuClosing, setChapterMenuClosing] = useState(false);
+  const [deleteChapterDraft, setDeleteChapterDraft] = useState<Chapter | null>(null);
+  const [deleteChapterClosing, setDeleteChapterClosing] = useState(false);
   const [activeAnnotationId, setActiveAnnotationId] = useState<string | null>(null);
   const [detailAnnotationId, setDetailAnnotationId] = useState<string | null>(null);
   const [detailAnnotationClosing, setDetailAnnotationClosing] = useState(false);
@@ -641,6 +654,17 @@ export default function App() {
   }, [annotationMenu]);
 
   useEffect(() => {
+    if (!chapterMenu) return;
+    const close = () => closeChapterMenu();
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [chapterMenu]);
+
+  useEffect(() => {
     if (workbenchBookId === "all") {
       setWorkbenchChapters([]);
       setWorkbenchChapterId("all");
@@ -928,10 +952,12 @@ export default function App() {
     draft,
     contextMenu,
     annotationMenu,
+    chapterMenu,
     searchOpen,
     settingsOpen,
     exportOpen,
     sortOpen,
+    deleteChapterDraft,
     batchExportOpen,
     workbenchNoteDetail,
     homeSettingsOpen,
@@ -1131,6 +1157,8 @@ export default function App() {
     setActiveAnnotationId(null);
     setDetailAnnotationId(null);
     setAnnotationMenu(null);
+    setChapterMenu(null);
+    setDeleteChapterDraft(null);
     try {
       const nextChapters = await listChapters(book.id);
       if (!nextChapters.length) {
@@ -1174,6 +1202,7 @@ export default function App() {
     setActiveSearchHighlight(null);
     setDetailAnnotationId(null);
     setAnnotationMenu(null);
+    setChapterMenu(null);
     try {
       const nextChapters = await listChapters(note.bookId);
       const nextReader = await readChapterVersion(note.chapterVersionId).catch(() =>
@@ -1217,6 +1246,7 @@ export default function App() {
     setActiveAnnotationId(null);
     setDetailAnnotationId(null);
     setAnnotationMenu(null);
+    setChapterMenu(null);
     try {
       const nextChapters = await listChapters(result.bookId);
       const nextReader = await readChapterVersion(result.chapterVersionId).catch(() =>
@@ -1263,6 +1293,7 @@ export default function App() {
     setActiveAnnotationId(null);
     setDetailAnnotationId(null);
     setAnnotationMenu(null);
+    setChapterMenu(null);
     try {
       const nextReader = await readChapter(chapterId);
       playReaderMotion("content");
@@ -1282,11 +1313,141 @@ export default function App() {
     setActiveAnnotationId(null);
     setDetailAnnotationId(null);
     setAnnotationMenu(null);
+    setChapterMenu(null);
     try {
       const nextReader = await readChapterVersion(chapterVersionId);
       playReaderMotion("content");
       setReader(nextReader);
       setPendingScroll(0);
+    } catch (err) {
+      setError(readError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleChapterContextMenu(
+    event: ReactMouseEvent<HTMLButtonElement>,
+    chapter: Chapter,
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    closeSelectionContextMenu();
+    closeAnnotationMenu();
+    setChapterMenuClosing(false);
+    setChapterMenu({
+      chapter,
+      x: Math.min(event.clientX, window.innerWidth - 218),
+      y: Math.min(event.clientY, window.innerHeight - 132),
+    });
+  }
+
+  async function refreshChapterFromMenu(chapter: Chapter) {
+    closeChapterMenu();
+    setBusy(true);
+    setError("");
+    setDraft(null);
+    setPendingDraft(null);
+    setActiveSearchHighlight(null);
+    setActiveAnnotationId(null);
+    setDetailAnnotationId(null);
+    try {
+      const previousVersionId = chapter.currentVersionId;
+      const refreshedVersion = await refreshChapterVersion(chapter.id);
+      const nextChapters = await listChapters(chapter.bookId);
+      setChapters(nextChapters);
+      setActiveBook((current) => {
+        if (!current || current.id !== chapter.bookId || !("chapterCount" in current)) {
+          return current;
+        }
+        return { ...current, chapterCount: nextChapters.length };
+      });
+      if (reader?.chapter.id === chapter.id) {
+        const nextReader = await readChapter(chapter.id);
+        playReaderMotion("content");
+        setReader(nextReader);
+        setPendingScroll(0);
+      }
+      void refreshBooks();
+      void refreshNotes();
+      const chapterName = chapterFileName(chapter);
+      setNotice(
+        refreshedVersion.id === previousVersionId
+          ? `章节“${chapterName}”已经是最新。`
+          : `已更新章节“${chapterName}”，生成 v${refreshedVersion.versionNumber}。`,
+      );
+    } catch (err) {
+      setError(readError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openChapterSourceInExplorer(chapter: Chapter) {
+    closeChapterMenu();
+    setBusy(true);
+    setError("");
+    try {
+      await openChapterInExplorer(chapter.id);
+    } catch (err) {
+      setError(readError(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function requestDeleteReaderChapter(chapter: Chapter) {
+    closeChapterMenu();
+    setDeleteChapterClosing(false);
+    setDeleteChapterDraft(chapter);
+  }
+
+  async function confirmDeleteReaderChapter() {
+    if (!deleteChapterDraft) return;
+    const draft = deleteChapterDraft;
+    const previousChapters = chapters;
+    const deletedIndex = Math.max(0, previousChapters.findIndex((chapter) => chapter.id === draft.id));
+    const deletedWasActive = reader?.chapter.id === draft.id;
+    setBusy(true);
+    setError("");
+    setDraft(null);
+    setPendingDraft(null);
+    setActiveSearchHighlight(null);
+    setActiveAnnotationId(null);
+    setDetailAnnotationId(null);
+    try {
+      const nextChapters = await deleteChapter(draft.id);
+      const nextSelected = nextChapters[Math.min(deletedIndex, nextChapters.length - 1)] ?? null;
+      closeDeleteChapterModal();
+      setChapters(nextChapters);
+      setActiveBook((current) => {
+        if (!current || current.id !== draft.bookId || !("chapterCount" in current)) {
+          return current;
+        }
+        return { ...current, chapterCount: nextChapters.length };
+      });
+      if (deletedWasActive) {
+        if (nextSelected) {
+          setReader(null);
+          const nextReader = await readChapter(nextSelected.id);
+          playReaderMotion("content");
+          setReader(nextReader);
+          setPendingScroll(0);
+        } else {
+          runViewTransition(() => {
+            setActiveBook(null);
+            setReader(null);
+            setChapters([]);
+          });
+        }
+      }
+      void refreshBooks();
+      void refreshNotes();
+      setNotice(
+        nextChapters.length
+          ? `已删除章节“${chapterFileName(draft)}”。`
+          : `已删除章节“${chapterFileName(draft)}”，这本书已没有可读章节。`,
+      );
     } catch (err) {
       setError(readError(err));
     } finally {
@@ -1470,6 +1631,7 @@ export default function App() {
   function openImagePreview(image: HTMLImageElement) {
     closeSelectionContextMenu();
     closeAnnotationMenu();
+    closeChapterMenu();
     setImagePreviewClosing(false);
     setImagePreview({
       src: image.currentSrc || image.src,
@@ -1630,7 +1792,7 @@ export default function App() {
       target === "left"
         ? isRightCollapsed ? 0 : rightPaneWidth
         : isLeftCollapsed ? 0 : leftPaneWidth;
-    const minWidth = target === "left" ? 220 : 260;
+    const minWidth = target === "left" ? 248 : 260;
     const maxWidth = Math.min(
       target === "left" ? 520 : 560,
       window.innerWidth - siblingWidth - 480,
@@ -2150,6 +2312,16 @@ export default function App() {
     animateClose(setAnnotationMenuClosing, () => setAnnotationMenu(null));
   }
 
+  function closeChapterMenu() {
+    if (!chapterMenu) return;
+    animateClose(setChapterMenuClosing, () => setChapterMenu(null));
+  }
+
+  function closeDeleteChapterModal() {
+    if (!deleteChapterDraft) return;
+    animateClose(setDeleteChapterClosing, () => setDeleteChapterDraft(null));
+  }
+
   function closeReaderAnnotationDetail() {
     if (!detailAnnotationId) return;
     animateClose(setDetailAnnotationClosing, () => setDetailAnnotationId(null));
@@ -2162,6 +2334,10 @@ export default function App() {
     }
 
     if (activeBook) {
+      if (deleteChapterDraft) {
+        closeDeleteChapterModal();
+        return true;
+      }
       if (detailAnnotationId) {
         closeReaderAnnotationDetail();
         return true;
@@ -2172,6 +2348,10 @@ export default function App() {
       }
       if (annotationMenu) {
         closeAnnotationMenu();
+        return true;
+      }
+      if (chapterMenu) {
+        closeChapterMenu();
         return true;
       }
       if (contextMenu) {
@@ -2703,7 +2883,7 @@ export default function App() {
           </div>
         </div>
 
-        <div className="pane-header">
+        <div className="pane-header chapter-heading">
           <span>章节</span>
           <button className="pane-action" onClick={openSortModal}>
             排序
@@ -2715,6 +2895,7 @@ export default function App() {
               key={chapter.id}
               className={`chapter-row ${reader?.chapter.id === chapter.id ? "active" : ""}`}
               onClick={() => void selectChapter(chapter.id)}
+              onContextMenu={(event) => handleChapterContextMenu(event, chapter)}
             >
               <FileText size={15} />
               <span>{chapterFileName(chapter)}</span>
@@ -2758,7 +2939,16 @@ export default function App() {
 
       <main className="reader-main">
         <header className="reader-toolbar">
-          <div>
+          <button
+            className={`icon-button reader-sidebar-toggle is-left ${!isLeftCollapsed ? "active" : ""}`}
+            title={isLeftCollapsed ? "展开左栏" : "收起左栏"}
+            aria-label={isLeftCollapsed ? "展开左栏" : "收起左栏"}
+            aria-pressed={!isLeftCollapsed}
+            onClick={() => setIsLeftCollapsed((value) => !value)}
+          >
+            {isLeftCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+          <div className="reader-toolbar-title">
             <p className="eyebrow">Chapter</p>
             <h2>{reader?.chapter.title}</h2>
           </div>
@@ -2779,20 +2969,6 @@ export default function App() {
               </select>
             )}
             <button
-              className={`icon-button ${!isLeftCollapsed ? "active" : ""}`}
-              title={isLeftCollapsed ? "展开左栏" : "收起左栏"}
-              onClick={() => setIsLeftCollapsed((value) => !value)}
-            >
-              <BookOpen size={18} />
-            </button>
-            <button
-              className={`icon-button ${!isRightCollapsed ? "active" : ""}`}
-              title={isRightCollapsed ? "展开右栏" : "收起右栏"}
-              onClick={() => setIsRightCollapsed((value) => !value)}
-            >
-              <MessageSquare size={18} />
-            </button>
-            <button
               className="icon-button"
               title="导出批注"
               onClick={openExportModal}
@@ -2810,6 +2986,15 @@ export default function App() {
               <Settings size={18} />
             </button>
           </div>
+          <button
+            className={`icon-button reader-sidebar-toggle is-right ${!isRightCollapsed ? "active" : ""}`}
+            title={isRightCollapsed ? "展开右栏" : "收起右栏"}
+            aria-label={isRightCollapsed ? "展开右栏" : "收起右栏"}
+            aria-pressed={!isRightCollapsed}
+            onClick={() => setIsRightCollapsed((value) => !value)}
+          >
+            {isRightCollapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
+          </button>
         </header>
 
         <div
@@ -3029,6 +3214,17 @@ export default function App() {
           onDelete={() => deleteAnnotationFromMenu(annotationMenu.annotation)}
         />
       )}
+      {chapterMenu && (
+        <ChapterContextMenu
+          chapter={chapterMenu.chapter}
+          x={chapterMenu.x}
+          y={chapterMenu.y}
+          closing={chapterMenuClosing}
+          onRefresh={() => void refreshChapterFromMenu(chapterMenu.chapter)}
+          onOpenInExplorer={() => void openChapterSourceInExplorer(chapterMenu.chapter)}
+          onDelete={() => requestDeleteReaderChapter(chapterMenu.chapter)}
+        />
+      )}
       {draft && (
         <NewAnnotationModal
           closing={draftClosing}
@@ -3045,6 +3241,15 @@ export default function App() {
           onClose={closeReaderAnnotationDetail}
           onDelete={() => void handleDeleteAnnotation(detailAnnotation.id)}
           onSave={(patch) => void handleUpdateAnnotation(detailAnnotation, patch)}
+        />
+      )}
+      {deleteChapterDraft && (
+        <DeleteChapterModal
+          closing={deleteChapterClosing}
+          chapter={deleteChapterDraft}
+          busy={busy}
+          onClose={closeDeleteChapterModal}
+          onConfirm={() => void confirmDeleteReaderChapter()}
         />
       )}
     </div>
@@ -3064,6 +3269,8 @@ function translateErrorMessage(message: string) {
     "Book root folder is missing.": "书籍根文件夹不存在或已被移动。",
     "Book was not found.": "没有找到这本书。",
     "Book name cannot be empty.": "书籍名称不能为空。",
+    "Chapter not found.": "没有找到章节。",
+    "Chapter source file no longer exists.": "章节源文件不存在或已被移动。",
     "Current chapter version cannot be deleted. Switch to or create another current version first.":
       "当前章节版本不能删除，请先切换或创建另一个当前版本。",
     "Preset name cannot be empty.": "预设名称不能为空。",
@@ -3086,9 +3293,15 @@ function translateErrorMessage(message: string) {
     ["Failed to read folder entry:", "读取文件夹条目失败："],
     ["Failed to resolve chapter path:", "解析章节路径失败："],
     ["Failed to open folder in Explorer:", "在资源管理器中打开文件夹失败："],
+    ["Failed to open chapter in Explorer:", "在资源管理器中打开章节失败："],
+    ["Failed to open chapter file:", "打开章节文件失败："],
+    ["Failed to open chapter folder:", "打开章节文件夹失败："],
     ["Failed to open folder:", "打开文件夹失败："],
     ["Failed to update pinned state:", "更新置顶状态失败："],
     ["Failed to save chapter order:", "保存章节顺序失败："],
+    ["Failed to start chapter deletion:", "启动章节删除失败："],
+    ["Failed to delete chapter:", "删除章节失败："],
+    ["Failed to save chapter deletion:", "保存章节删除失败："],
     ["Failed to update annotation:", "更新批注失败："],
     ["Failed to update annotation status:", "更新批注状态失败："],
     ["Failed to save annotation status:", "保存批注状态失败："],

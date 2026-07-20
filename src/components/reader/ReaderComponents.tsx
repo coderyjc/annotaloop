@@ -1,4 +1,17 @@
-import { Check, Copy, FileText, GripVertical, Pin, PinOff, Save, Trash2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  Copy,
+  FileText,
+  FolderOpen,
+  GripVertical,
+  Pin,
+  PinOff,
+  RefreshCw,
+  Save,
+  Trash2,
+  X,
+} from "lucide-react";
 import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
 
 import { FontPicker } from "../FontPicker";
@@ -81,6 +94,89 @@ export function AnnotationContextMenu({
       <button className="danger" onClick={onDelete}>
         <Trash2 size={15} /> 删除
       </button>
+    </div>
+  );
+}
+
+export function ChapterContextMenu({
+  chapter,
+  x,
+  y,
+  closing,
+  onRefresh,
+  onOpenInExplorer,
+  onDelete,
+}: {
+  chapter: Chapter;
+  x: number;
+  y: number;
+  closing: boolean;
+  onRefresh: () => void;
+  onOpenInExplorer: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div
+      className={`context-menu chapter-context-menu ${closing ? "is-closing" : ""}`}
+      style={{ left: x, top: y }}
+      onClick={(event) => event.stopPropagation()}
+      aria-label={`${chapterFileName(chapter)} 操作`}
+    >
+      <button onClick={onRefresh}>
+        <RefreshCw size={15} /> 更新
+      </button>
+      <button onClick={onOpenInExplorer}>
+        <FolderOpen size={15} /> 在资源管理器打开
+      </button>
+      <button className="danger" onClick={onDelete}>
+        <Trash2 size={15} /> 删除
+      </button>
+    </div>
+  );
+}
+
+export function DeleteChapterModal({
+  closing,
+  chapter,
+  busy,
+  onClose,
+  onConfirm,
+}: {
+  closing: boolean;
+  chapter: Chapter;
+  busy: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      className={`modal-backdrop ${closing ? "is-closing" : ""}`}
+      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <section className="annotation-modal compact-modal" onMouseDown={(event) => event.stopPropagation()}>
+        <header>
+          <div>
+            <p className="eyebrow">Chapter</p>
+            <h2>删除章节</h2>
+          </div>
+          <button className="icon-button" title="关闭" onClick={onClose} disabled={busy}>
+            <X size={18} />
+          </button>
+        </header>
+        <div className="delete-book-warning">
+          <AlertTriangle size={20} />
+          <div>
+            <strong>删除章节“{chapterFileName(chapter)}”？</strong>
+            <p>会同步删除这个章节的所有版本、批注和阅读进度；不会删除磁盘上的 Markdown 源文件。</p>
+          </div>
+        </div>
+        <div className="modal-actions">
+          <button onClick={onClose} disabled={busy}>取消</button>
+          <button className="danger" onClick={onConfirm} disabled={busy}>
+            <Trash2 size={16} /> 确认删除
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
