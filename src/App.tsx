@@ -96,10 +96,12 @@ import {
   findSelectionOffset,
   getContextFromText,
   getHeadingPath,
+  getMarkdownReadableText,
   getRenderedSelectionAnchor,
   renderMarkdownWithAnnotations,
   type SearchHighlight,
 } from "./markdown";
+import { renderMermaidDiagrams } from "./mermaid";
 import type {
   Annotation,
   AnnotationPayload,
@@ -343,6 +345,7 @@ export default function App() {
   const [topNoticeClosing, setTopNoticeClosing] = useState(false);
   const [pendingScroll, setPendingScroll] = useState<number | null>(null);
   const [noteDetailClosing, setNoteDetailClosing] = useState(false);
+  const [enhancedMarkdownKey, setEnhancedMarkdownKey] = useState("");
 
   const articleRef = useRef<HTMLDivElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -670,8 +673,30 @@ export default function App() {
     };
   }, [activeBook, reader]);
 
+  const renderedHtml = useMemo(() => {
+    if (!reader) return "";
+    return renderMarkdownWithAnnotations(reader.content, reader.chapter.filePath);
+  }, [reader?.chapter.filePath, reader?.content]);
+
+  const markdownEnhancementKey = useMemo(() => {
+    if (!reader) return "";
+    return [
+      reader.version.id,
+      reader.content.length,
+      settings.themeSeries,
+      settings.theme,
+    ].join(":");
+  }, [reader?.content.length, reader?.version.id, settings.theme, settings.themeSeries]);
+
   useEffect(() => {
-    if (!reader || !activeAnnotationId || !articleRef.current) return;
+    if (
+      !reader ||
+      !activeAnnotationId ||
+      !articleRef.current ||
+      enhancedMarkdownKey !== markdownEnhancementKey
+    ) {
+      return;
+    }
     const frame = window.requestAnimationFrame(() => {
       const mark = articleRef.current?.querySelector<HTMLElement>(
         `[data-annotation-id="${activeAnnotationId}"]`,
@@ -679,10 +704,17 @@ export default function App() {
       mark?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [activeAnnotationId, reader]);
+  }, [activeAnnotationId, enhancedMarkdownKey, markdownEnhancementKey, reader]);
 
   useEffect(() => {
-    if (!reader || !activeSearchHighlight || !articleRef.current) return;
+    if (
+      !reader ||
+      !activeSearchHighlight ||
+      !articleRef.current ||
+      enhancedMarkdownKey !== markdownEnhancementKey
+    ) {
+      return;
+    }
     const frame = window.requestAnimationFrame(() => {
       const mark = articleRef.current?.querySelector<HTMLElement>("[data-search-hit='true']");
       const activeMark =
@@ -690,10 +722,17 @@ export default function App() {
       activeMark?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [activeSearchHighlight, reader]);
+  }, [activeSearchHighlight, enhancedMarkdownKey, markdownEnhancementKey, reader]);
 
   useEffect(() => {
-    if (!reader || activeReaderSearchIndex < 0 || !articleRef.current) return;
+    if (
+      !reader ||
+      activeReaderSearchIndex < 0 ||
+      !articleRef.current ||
+      enhancedMarkdownKey !== markdownEnhancementKey
+    ) {
+      return;
+    }
     const match = readerSearchMatches[activeReaderSearchIndex];
     if (!match) return;
     const frame = window.requestAnimationFrame(() => {
@@ -703,12 +742,13 @@ export default function App() {
       mark?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [activeReaderSearchIndex, reader, readerSearchMatches]);
-
-  const renderedHtml = useMemo(() => {
-    if (!reader) return "";
-    return renderMarkdownWithAnnotations(reader.content, reader.chapter.filePath);
-  }, [reader]);
+  }, [
+    activeReaderSearchIndex,
+    enhancedMarkdownKey,
+    markdownEnhancementKey,
+    reader,
+    readerSearchMatches,
+  ]);
 
   const readerStats = useMemo(() => getReadingStats(reader?.content ?? ""), [reader?.content]);
 
@@ -756,22 +796,58 @@ export default function App() {
 
   useEffect(() => {
     if (!reader || !articleRef.current) {
+      setEnhancedMarkdownKey("");
+      return;
+    }
+
+    let cancelled = false;
+    setEnhancedMarkdownKey("");
+    const frame = window.requestAnimationFrame(() => {
+      const root = articleRef.current;
+      if (!root) return;
+      void renderMermaidDiagrams(root)
+        .catch((err) => {
+          if (!cancelled) setError(readError(err));
+        })
+        .finally(() => {
+          if (!cancelled) setEnhancedMarkdownKey(markdownEnhancementKey);
+        });
+    });
+
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [markdownEnhancementKey, renderedHtml]);
+
+  useEffect(() => {
+    if (
+      !reader ||
+      !articleRef.current ||
+      enhancedMarkdownKey !== markdownEnhancementKey
+    ) {
       setReaderSearchMatches([]);
       setActiveReaderSearchIndex(-1);
       return;
     }
     const nextMatches = buildReaderSearchMatches(
-      articleRef.current.textContent ?? "",
+      getMarkdownReadableText(articleRef.current),
       readerSearchQuery,
     );
     setReaderSearchMatches(nextMatches);
     setActiveReaderSearchIndex(-1);
-  }, [reader?.version.id, readerSearchQuery, renderedHtml]);
+  }, [enhancedMarkdownKey, markdownEnhancementKey, reader, readerSearchQuery]);
 
   useEffect(() => {
-    if (!reader || !articleRef.current) return;
+    if (
+      !reader ||
+      !articleRef.current ||
+      enhancedMarkdownKey !== markdownEnhancementKey
+    ) {
+      return;
+    }
     applyDomHighlights(articleRef.current, reader.annotations, visibleSearchHighlights);
-  }, [reader, renderedHtml, visibleSearchHighlights]);
+  }, [enhancedMarkdownKey, markdownEnhancementKey, reader, visibleSearchHighlights]);
 
   const detailAnnotation = useMemo(() => {
     if (!reader || !detailAnnotationId) return null;

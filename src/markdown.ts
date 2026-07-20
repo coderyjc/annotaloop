@@ -46,6 +46,7 @@ const md = new MarkdownIt({
 });
 
 const defaultImageRule = md.renderer.rules.image;
+const defaultFenceRule = md.renderer.rules.fence;
 
 md.renderer.rules.image = (tokens, idx, options, env, self) => {
   const token = tokens[idx];
@@ -59,6 +60,17 @@ md.renderer.rules.image = (tokens, idx, options, env, self) => {
     : self.renderToken(tokens, idx, options);
 };
 
+md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+  const token = tokens[idx];
+  const language = token.info.trim().split(/\s+/)[0]?.toLowerCase();
+  if (language === "mermaid") {
+    return renderMermaidPlaceholder(token.content);
+  }
+  return defaultFenceRule
+    ? defaultFenceRule(tokens, idx, options, env, self)
+    : self.renderToken(tokens, idx, options);
+};
+
 export function renderMarkdownWithAnnotations(
   content: string,
   chapterFilePath: string,
@@ -66,12 +78,16 @@ export function renderMarkdownWithAnnotations(
   return md.render(content, { chapterFilePath });
 }
 
+export function getMarkdownReadableText(root: HTMLElement) {
+  return collectTextNodes(root).map((span) => span.node.data).join("");
+}
+
 export function getRenderedSelectionAnchor(root: HTMLElement, selection: Selection) {
   if (selection.rangeCount === 0) return null;
   const range = selection.getRangeAt(0);
   if (!root.contains(range.commonAncestorContainer)) return null;
 
-  const fullText = root.textContent ?? "";
+  const fullText = getMarkdownReadableText(root);
   const rawStart = getBoundaryTextOffset(root, range.startContainer, range.startOffset);
   const rawEnd = getBoundaryTextOffset(root, range.endContainer, range.endOffset);
   const start = Math.min(rawStart, rawEnd);
@@ -246,12 +262,44 @@ function resolveImageSrc(src: string, chapterFilePath?: string) {
   }
 }
 
+function renderMermaidPlaceholder(source: string) {
+  const encodedSource = escapeHtmlAttribute(encodeURIComponent(source));
+  const escapedSource = escapeHtml(source);
+  return [
+    `<figure class="mermaid-figure">`,
+    `<div class="mermaid-diagram" role="img" aria-label="Mermaid 图表" data-mermaid-source="${encodedSource}">`,
+    escapedSource,
+    `</div>`,
+    `</figure>`,
+  ].join("");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function escapeHtmlAttribute(value: string) {
+  return escapeHtml(value).replace(/"/g, "&quot;");
+}
+
 function getBoundaryTextOffset(root: HTMLElement, container: Node, offset: number) {
-  const range = document.createRange();
-  range.selectNodeContents(root);
-  range.setEnd(container, offset);
-  const fragment = range.cloneContents();
-  return fragment.textContent?.length ?? 0;
+  const textNodes = collectTextNodes(root);
+  let textOffset = 0;
+
+  for (const textNode of textNodes) {
+    if (textNode.node === container) {
+      return textOffset + Math.min(Math.max(offset, 0), textNode.node.data.length);
+    }
+    if (!isTextNodeBeforeBoundary(textNode.node, container, offset)) {
+      break;
+    }
+    textOffset += textNode.node.data.length;
+  }
+
+  return textOffset;
 }
 
 function clearDomHighlights(root: HTMLElement) {
@@ -456,7 +504,13 @@ function wrapDomRanges(root: HTMLElement, ranges: DomHighlightRange[]) {
 }
 
 function collectTextNodes(root: HTMLElement) {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      return isExcludedFromReadableText(root, node)
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT;
+    },
+  });
   const nodes: TextNodeSpan[] = [];
   let offset = 0;
   while (walker.nextNode()) {
@@ -470,6 +524,27 @@ function collectTextNodes(root: HTMLElement) {
     offset += length;
   }
   return nodes;
+}
+
+function isExcludedFromReadableText(root: HTMLElement, node: Node) {
+  const element =
+    node.nodeType === Node.ELEMENT_NODE
+      ? (node as Element)
+      : node.parentElement;
+  const excluded = element?.closest(".mermaid-figure");
+  return Boolean(excluded && root.contains(excluded));
+}
+
+function isTextNodeBeforeBoundary(textNode: Text, container: Node, offset: number) {
+  const textRange = document.createRange();
+  const boundaryRange = document.createRange();
+  textRange.selectNodeContents(textNode);
+  boundaryRange.setStart(container, offset);
+  boundaryRange.collapse(true);
+  const isBefore = textRange.compareBoundaryPoints(Range.END_TO_START, boundaryRange) <= 0;
+  textRange.detach();
+  boundaryRange.detach();
+  return isBefore;
 }
 
 function wrapTextNodeSegments(node: Text, segments: TextNodeSegment[]) {

@@ -4060,6 +4060,64 @@ button:disabled {
   padding: 0;
 }
 
+.markdown-body .mermaid-figure {
+  overflow: auto;
+  margin: 0 0 var(--reader-paragraph-spacing);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--paper-strong) 86%, var(--accent) 5%), transparent),
+    color-mix(in srgb, var(--paper) 92%, var(--paper-strong));
+  padding: 18px;
+}
+
+.markdown-body .mermaid-diagram {
+  min-width: 560px;
+  min-height: 96px;
+  color: var(--ink);
+}
+
+.markdown-body .mermaid-diagram:not(.is-rendered):not(.is-error) {
+  display: grid;
+  place-items: center;
+  color: transparent;
+}
+
+.markdown-body .mermaid-diagram:not(.is-rendered):not(.is-error)::before {
+  content: "正在渲染 Mermaid 图...";
+  color: var(--muted);
+  font-size: 0.82em;
+  font-weight: 720;
+}
+
+.markdown-body .mermaid-diagram svg {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.markdown-body .mermaid-diagram.is-error {
+  min-width: 0;
+}
+
+.markdown-body .mermaid-error-title {
+  color: var(--accent);
+  font-size: 0.95em;
+  font-weight: 820;
+}
+
+.markdown-body .mermaid-error-message {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.82em;
+}
+
+.markdown-body .mermaid-diagram.is-error pre {
+  margin: 14px 0 0;
+}
+
 .markdown-body table {
   width: 100%;
   border-collapse: collapse;
