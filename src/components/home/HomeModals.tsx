@@ -1,4 +1,4 @@
-import { AlertTriangle, Archive, ArrowRight, BookOpen, Check, Copy, Database, Download, FileText, FolderOpen, Github, GripVertical, Keyboard, MessageSquare, Palette, Pencil, Pin, PinOff, Plus, RefreshCw, Save, Search, Trash2, Type, Upload, X } from "lucide-react";
+import { AlertTriangle, Archive, ArrowRight, BookOpen, Check, ChevronLeft, ChevronRight, Copy, Database, Download, FileText, FolderOpen, Github, GripVertical, Keyboard, MessageSquare, Palette, Pencil, Pin, PinOff, Plus, RefreshCw, Save, Search, Trash2, Type, Upload, X } from "lucide-react";
 import { type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteChapter,
@@ -84,6 +84,8 @@ interface VersionDiffResult {
 }
 
 type HomeSettingsCategory = "appearance" | "features" | "shortcuts" | "prompts" | "backup" | "about";
+
+const themeSkinPageSize = 6;
 
 function parseHomeTableColumns(value: string): Record<HomeTableColumnKey, boolean> {
   try {
@@ -783,6 +785,7 @@ export function HomeSettingsModal({
   const [presetDraft, setPresetDraft] = useState<ExportPresetPayload>(emptyExportPresetDraft);
   const [recordingAction, setRecordingAction] = useState<ShortcutAction | null>(null);
   const [activeCategory, setActiveCategory] = useState<HomeSettingsCategory>("appearance");
+  const [themeSkinPage, setThemeSkinPage] = useState(0);
   const bindings = parseShortcutBindings(settings.shortcutBindings);
   const settingsCategories = [
     {
@@ -851,7 +854,13 @@ export function HomeSettingsModal({
   const activeSeriesOption =
     visibleThemeSeriesOptions.find((series) => series.id === activeThemeSeries) ??
     visibleThemeSeriesOptions[0];
-  const availableThemes = getThemesForSeries(activeThemeSeries);
+  const availableThemes = useMemo(() => getThemesForSeries(activeThemeSeries), [activeThemeSeries]);
+  const themeSkinPageCount = Math.max(1, Math.ceil(availableThemes.length / themeSkinPageSize));
+  const currentThemeSkinPage = Math.min(themeSkinPage, themeSkinPageCount - 1);
+  const pagedThemes = availableThemes.slice(
+    currentThemeSkinPage * themeSkinPageSize,
+    currentThemeSkinPage * themeSkinPageSize + themeSkinPageSize,
+  );
   const tryRandomTheme = () => {
     const candidates = allThemeOptions.filter(
       (theme) => theme.value !== settings.theme || theme.series !== settings.themeSeries,
@@ -859,6 +868,9 @@ export function HomeSettingsModal({
     const pool = candidates.length ? candidates : allThemeOptions;
     const choice = pool[Math.floor(Math.random() * pool.length)];
     if (choice) {
+      const choiceThemes = getThemesForSeries(choice.series);
+      const choiceIndex = choiceThemes.findIndex((theme) => theme.value === choice.value);
+      setThemeSkinPage(choiceIndex >= 0 ? Math.floor(choiceIndex / themeSkinPageSize) : 0);
       onChange({ themeSeries: choice.series, theme: choice.value });
     }
   };
@@ -871,6 +883,14 @@ export function HomeSettingsModal({
       }),
     });
   };
+
+  useEffect(() => {
+    const selectedThemeIndex = availableThemes.findIndex((theme) => theme.value === settings.theme);
+    setThemeSkinPage((page) => {
+      if (selectedThemeIndex >= 0) return Math.floor(selectedThemeIndex / themeSkinPageSize);
+      return Math.min(page, themeSkinPageCount - 1);
+    });
+  }, [activeThemeSeries, availableThemes, settings.theme, themeSkinPageCount]);
 
   useEffect(() => {
     if (!editingPresetId) return;
@@ -1034,12 +1054,13 @@ export function HomeSettingsModal({
                           className={`theme-choice series-choice ${
                             activeThemeSeries === series.id ? "active" : ""
                           }`}
-                          onClick={() =>
+                          onClick={() => {
+                            setThemeSkinPage(0);
                             onChange({
                               themeSeries: series.id,
                               theme: getDefaultThemeForSeries(series.id),
-                            })
-                          }
+                            });
+                          }}
                         >
                           <span
                             className="theme-preview series-preview"
@@ -1066,7 +1087,7 @@ export function HomeSettingsModal({
                         <small>{activeSeriesOption.description}</small>
                       </div>
                       <div className="theme-choice-grid theme-skin-grid">
-                        {availableThemes.map((option) => (
+                        {pagedThemes.map((option) => (
                           <button
                             key={option.value}
                             type="button"
@@ -1092,6 +1113,43 @@ export function HomeSettingsModal({
                           </button>
                         ))}
                       </div>
+                      {themeSkinPageCount > 1 && (
+                        <nav className="theme-pagination" aria-label="子主题分页">
+                          <button
+                            type="button"
+                            className="theme-page-nav"
+                            onClick={() => setThemeSkinPage((page) => Math.max(0, page - 1))}
+                            disabled={currentThemeSkinPage === 0}
+                            aria-label="上一页"
+                          >
+                            <ChevronLeft size={15} />
+                          </button>
+                          <div className="theme-page-numbers">
+                            {Array.from({ length: themeSkinPageCount }, (_, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                className={currentThemeSkinPage === index ? "active" : ""}
+                                onClick={() => setThemeSkinPage(index)}
+                                aria-current={currentThemeSkinPage === index ? "page" : undefined}
+                              >
+                                {index + 1}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            className="theme-page-nav"
+                            onClick={() =>
+                              setThemeSkinPage((page) => Math.min(themeSkinPageCount - 1, page + 1))
+                            }
+                            disabled={currentThemeSkinPage >= themeSkinPageCount - 1}
+                            aria-label="下一页"
+                          >
+                            <ChevronRight size={15} />
+                          </button>
+                        </nav>
+                      )}
                     </div>
                   </div>
                 </section>

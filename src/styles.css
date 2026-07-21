@@ -5977,6 +5977,51 @@ body.sorting-drag-active * {
   grid-template-columns: repeat(auto-fit, minmax(164px, 1fr));
 }
 
+.theme-pagination {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.theme-page-numbers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.theme-pagination button {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--paper-strong) 84%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 820;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.theme-pagination button:hover:not(:disabled),
+.theme-pagination button.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--paper-strong));
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.theme-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
 .theme-choice {
   display: grid;
   min-height: 82px;
