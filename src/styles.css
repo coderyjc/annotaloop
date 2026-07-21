@@ -47,6 +47,8 @@ body,
 
 body {
   overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 button,
@@ -58,6 +60,16 @@ textarea {
 
 button {
   border: 0;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+.markdown-body,
+.markdown-body *,
+.export-output {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 button:disabled {
